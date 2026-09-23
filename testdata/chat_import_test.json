@@ -1,0 +1,362 @@
+[
+    {
+        "send_time": 1700000000,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Hi everyone, today let us go over the technical plan for the new project.\"}}"
+    },
+    {
+        "send_time": 1700000060,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Sure. Let me set out the background first. We need a knowledge base management system that can ingest several document formats, including PDF, Word and Markdown. It needs full-text search and semantic search, and it has to keep each workspace isolated.\"}}"
+    },
+    {
+        "send_time": 1700000120,
+        "msgtype": "text",
+        "sender_name": "Rohan Iyer",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Any suggestions on the stack?\"}}"
+    },
+    {
+        "send_time": 1700000180,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"I would suggest Go on the backend, PostgreSQL for storage, and Milvus or Qdrant for vector retrieval. React + TypeScript on the frontend.\"}}"
+    },
+    {
+        "send_time": 1700000240,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Agreed. On document parsing I did some digging:\\n\\n1. PDF can go through unstructured, which handles tables and image extraction\\n2. Word documents go through the docx library\\n3. Markdown uses a standard parser\\n4. Scanned PDFs need an OCR service\\n\\nSeparately, we should keep the chunking strategy pluggable.\"}}"
+    },
+    {
+        "send_time": 1700000300,
+        "msgtype": "text",
+        "sender_name": "Sneha Kulkarni",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Let me add the retrieval side. The common embedding models today are OpenAI's text-embedding-ada-002, the BGE family and E5. We can put an abstraction layer in front so the embedding model can be swapped.\"}}"
+    },
+    {
+        "send_time": 1700000360,
+        "msgtype": "text",
+        "sender_name": "Rohan Iyer",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Right, and how do we design permissions?\"}}"
+    },
+    {
+        "send_time": 1700000420,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"We will use RBAC, with these tiers:\\n\\n- Super admin: global administration\\n- Workspace admin: manages one knowledge workspace\\n- Editor: can upload and edit documents\\n- Viewer: can only read and search\\n\\nEvery knowledge workspace stays isolated; data does not cross over.\"}}"
+    },
+    {
+        "send_time": 1700000480,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"@Rohan has the API gateway decision been made?\"}}"
+    },
+    {
+        "send_time": 1700000540,
+        "msgtype": "text",
+        "sender_name": "Rohan Iyer",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Yes, we are going with Kong as the API gateway, mainly for its plugin ecosystem and performance. For auth we will use JWT plus OAuth 2.0.\"}}"
+    },
+    {
+        "send_time": 1700000600,
+        "msgtype": "text",
+        "sender_name": "Sneha Kulkarni",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"I wrote up the full architecture:\\n\\n[Frontend]\\n- React 18 + TypeScript\\n- Component library and design tokens\\n- TanStack Query for data fetching\\n\\n[Gateway]\\n- Kong API Gateway\\n- JWT + OAuth 2.0\\n\\n[Services]\\n- User service (Go)\\n- Document service (Go + Python workers)\\n- Retrieval service (Go)\\n\\n[Storage]\\n- PostgreSQL, Redis, Milvus, object storage\"}}"
+    },
+    {
+        "send_time": 1700000660,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Very thorough. A few more points:\\n1. CI/CD on GitHub Actions\\n2. Container registry on Harbor\\n3. Configuration service for runtime config\"}}"
+    },
+    {
+        "send_time": 1700000720,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"One more important question: chunk granularity. From what I have seen, a chunk size of 512 to 1024 tokens works well, with 10-20% overlap. Different document types may want different strategies.\"}}"
+    },
+    {
+        "send_time": 1700000780,
+        "msgtype": "text",
+        "sender_name": "Rohan Iyer",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"I agree with Priya. I would also add a chunking preview, so a user can upload a document, see how it was split, and adjust anything that looks wrong.\"}}"
+    },
+    {
+        "send_time": 1700000840,
+        "msgtype": "text",
+        "sender_name": "Sneha Kulkarni",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Good idea. That will make the experience much better.\"}}"
+    },
+    {
+        "send_time": 1700001000,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Let us split the work:\\n- Arjun (me): overall architecture and the user service\\n- Priya: document parsing and chunking\\n- Rohan: API gateway and authentication\\n- Sneha: vector retrieval and semantic search\"}}"
+    },
+    {
+        "send_time": 1700001060,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"No problem. I expect a first prototype in about two weeks.\"}}"
+    },
+    {
+        "send_time": 1700001120,
+        "msgtype": "text",
+        "sender_name": "Rohan Iyer",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"OK, the gateway piece should be done within a week.\"}}"
+    },
+    {
+        "send_time": 1700001180,
+        "msgtype": "text",
+        "sender_name": "Sneha Kulkarni",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Got it. I will bring up the Milvus cluster first, then write the retrieval service.\"}}"
+    },
+    {
+        "send_time": 1700086400,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"@all quick update: the parsing module now handles PDF and Word, and I am tuning table detection. One issue: text extraction is poor on some PDFs, so we may need OCR in the loop.\"}}"
+    },
+    {
+        "send_time": 1700086460,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"PaddleOCR would work for that: open source, free, and the accuracy is reasonable.\"}}"
+    },
+    {
+        "send_time": 1700086520,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Will try it. I have also implemented three chunking strategies:\\n1. Fixed length (by token count)\\n2. Recursive character splitting (paragraph, then sentence, then character)\\n3. Semantic splitting (split points chosen from embedding similarity)\\n\\nSemantic splitting gives the best results but is the slowest, so I suggest offering it as an advanced option.\"}}"
+    },
+    {
+        "send_time": 1700086580,
+        "msgtype": "text",
+        "sender_name": "Sneha Kulkarni",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"I can help optimise the semantic path; batching the embedding calls speeds it up a lot.\"}}"
+    },
+    {
+        "send_time": 1700086640,
+        "msgtype": "text",
+        "sender_name": "Rohan Iyer",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"The API gateway is deployed and JWT auth is wired up. These endpoints are live:\\n- POST /api/v1/auth/login\\n- POST /api/v1/auth/register\\n- GET /api/v1/user/profile\\n- POST /api/v1/documents\\n- GET /api/v1/search\"}}"
+    },
+    {
+        "send_time": 1700086700,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Good progress. The user service is broadly done as well: registration, login, role management and workspace management. I will start integration with Rohan tomorrow.\"}}"
+    },
+    {
+        "send_time": 1700172800,
+        "msgtype": "text",
+        "sender_name": "Sneha Kulkarni",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"The retrieval service is usable now. A quick benchmark:\\n\\n- Dataset: 1 million vectors (768 dimensions)\\n- Index type: IVF_FLAT\\n- Query latency: P99 < 50ms\\n- Recall: top10 > 95%\\n\\nThat is more than enough for our case.\"}}"
+    },
+    {
+        "send_time": 1700172860,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Excellent, the numbers look good. We still need a hybrid retrieval plan that combines vector search with keyword search, to improve both precision and coverage.\"}}"
+    },
+    {
+        "send_time": 1700172920,
+        "msgtype": "text",
+        "sender_name": "Sneha Kulkarni",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Already on it. I am fusing the two result sets with RRF (Reciprocal Rank Fusion); early tests are about 20% better than either path alone.\"}}"
+    },
+    {
+        "send_time": 1700172980,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"The document pipeline runs end to end now:\\nupload -> format detection -> text extraction -> cleanup -> chunking -> embedding -> indexing\\n\\nAverage throughput: a 10-page PDF takes roughly 15 seconds.\"}}"
+    },
+    {
+        "send_time": 1700173040,
+        "msgtype": "text",
+        "sender_name": "Rohan Iyer",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Integration went smoothly. A few small issues turned up and are already fixed. All endpoints are connected, so we can start integration testing.\"}}"
+    },
+    {
+        "send_time": 1700259200,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Integration testing found a problem: past about 50 concurrent uploads the processing queue backs up. @Priya should we put a message queue in front to buffer it?\"}}"
+    },
+    {
+        "send_time": 1700259260,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"We should. I will add RabbitMQ as the task queue and make document processing asynchronous:\\n1. The upload endpoint returns a task_id immediately\\n2. Background workers pull tasks off the queue\\n3. The frontend is notified over WebSocket when processing finishes\\n\\nThat keeps the upload endpoint from blocking.\"}}"
+    },
+    {
+        "send_time": 1700259320,
+        "msgtype": "text",
+        "sender_name": "Sneha Kulkarni",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"I would also add a progress endpoint, so the frontend can poll or use SSE to show processing progress.\"}}"
+    },
+    {
+        "send_time": 1700259380,
+        "msgtype": "text",
+        "sender_name": "Rohan Iyer",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"The WebSocket gateway config is in place, with long-lived connections and heartbeats.\"}}"
+    },
+    {
+        "send_time": 1700259440,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Good, let us settle on that. Monday we will do a full code review, then get ready to deploy to the test environment.\"}}"
+    },
+    {
+        "send_time": 1700259500,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Understood.\"}}"
+    },
+    {
+        "send_time": 1700259560,
+        "msgtype": "text",
+        "sender_name": "Rohan Iyer",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"I will make time for it.\"}}"
+    },
+    {
+        "send_time": 1700259620,
+        "msgtype": "text",
+        "sender_name": "Sneha Kulkarni",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"No problem. I will finish the retrieval service unit tests over the weekend.\"}}"
+    },
+    {
+        "send_time": 1700345600,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"@all reminder: code review tomorrow at 2 pm. Please push your code to the feature branch beforehand.\\n\\nReview focus:\\n1. Naming and code style\\n2. Error handling coverage\\n3. Concurrency safety\\n4. Performance bottlenecks\\n5. Security issues\"}}"
+    },
+    {
+        "send_time": 1700345660,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Pushed. PR: https://github.com/example/knowledgebase/pull/42\"}}"
+    },
+    {
+        "send_time": 1700345720,
+        "msgtype": "text",
+        "sender_name": "Rohan Iyer",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Mine is up too: https://github.com/example/knowledgebase/pull/43\"}}"
+    },
+    {
+        "send_time": 1700345780,
+        "msgtype": "text",
+        "sender_name": "Sneha Kulkarni",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Pushed: https://github.com/example/knowledgebase/pull/44\\nUnit test coverage is at 85%.\"}}"
+    },
+    {
+        "send_time": 1700432000,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Code review summary:\\n\\nOverall quality is good. A few things to improve:\\n\\n[Priya - document service]\\n- File upload has no type check; add an allow-list\\n- Large file handling needs a memory cap\\n- Consider adding document de-duplication\\n\\n[Rohan - gateway service]\\n- Rate limiting is global; make it per user and per endpoint\\n- Add request ID tracing across the call chain\\n\\n[Sneha - retrieval service]\\n- Make the vector dimension configurable\\n- Add a search result cache\\n- Support more filter dimensions\"}}"
+    },
+    {
+        "send_time": 1700432060,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Understood. The type check and the memory cap I can finish today. For de-duplication I was planning to use SimHash for near-duplicate detection; is that acceptable?\"}}"
+    },
+    {
+        "send_time": 1700432120,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Yes, SimHash works well for text. Use MD5 for exact duplicates first, then SimHash for near duplicates, so you get two layers of filtering.\"}}"
+    },
+    {
+        "send_time": 1700432180,
+        "msgtype": "text",
+        "sender_name": "Rohan Iyer",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"I have changed rate limiting to be keyed on user plus endpoint. Request ID tracing uses an X-Request-ID header carried through the whole call chain.\"}}"
+    },
+    {
+        "send_time": 1700432240,
+        "msgtype": "text",
+        "sender_name": "Sneha Kulkarni",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"The vector dimension is configurable now. The search cache uses LRU with a 5 minute TTL. For filters I support:\\n- Time range\\n- Document tags\\n- Knowledge workspace\\n- Document type\\n- Custom metadata fields\"}}"
+    },
+    {
+        "send_time": 1700518400,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"All the changes are merged; we are ready to deploy to the test environment. @Rohan please confirm the K8s resource allocation.\"}}"
+    },
+    {
+        "send_time": 1700518460,
+        "msgtype": "text",
+        "sender_name": "Rohan Iyer",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Test environment resources:\\n\\n- User service: 2 CPU / 4G x 2 replicas\\n- Document service: 4 CPU / 8G x 3 replicas (needs more memory for large files)\\n- Retrieval service: 4 CPU / 8G x 2 replicas\\n- Gateway service: 2 CPU / 4G x 2 replicas\\n- PostgreSQL: 8 CPU / 16G\\n- Redis: 2 CPU / 4G\"}}"
+    },
+    {
+        "send_time": 1700518520,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"That is enough. Let us deploy, and once it is up everyone verifies their own module.\"}}"
+    },
+    {
+        "send_time": 1700518580,
+        "msgtype": "text",
+        "sender_name": "Sneha Kulkarni",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"The Milvus cluster is already deployed, with persistence configured.\"}}"
+    },
+    {
+        "send_time": 1700518640,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Should the number of document workers be configurable? Right now it defaults to 3 concurrent workers.\"}}"
+    },
+    {
+        "send_time": 1700518700,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Yes, drive it from an environment variable. Three is fine for the test environment; production will likely need more.\"}}"
+    },
+    {
+        "send_time": 1700604800,
+        "msgtype": "text",
+        "sender_name": "Rohan Iyer",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Test environment deployment is complete. All services are healthy and every health check passes.\\n\\nURL: https://test-kb.example.com\\n\\nSwagger: https://test-kb.example.com/swagger/index.html\"}}"
+    },
+    {
+        "send_time": 1700604860,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Upload and processing verified. Formats tested:\\n- PDF (plain text): pass\\n- PDF (with tables): pass\\n- PDF (scanned + OCR): pass\\n- Word (.docx): pass\\n- Markdown: pass\\n- TXT: pass\\n- Excel: not supported yet, planned for the next release\"}}"
+    },
+    {
+        "send_time": 1700604920,
+        "msgtype": "text",
+        "sender_name": "Sneha Kulkarni",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Retrieval verified. I imported 100 documents and ran searches; relevance is good. One issue though: when the query is very short (two or three words) vector retrieval degrades, so short queries should be handled specially, for example by favouring keyword search.\"}}"
+    },
+    {
+        "send_time": 1700604980,
+        "msgtype": "text",
+        "sender_name": "Arjun Mehta",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Good catch, add it to the optimisation list. The first release can ship as is. Next week we start inviting internal users to try it and collect feedback.\\n\\nThanks everyone, the project is going well.\"}}"
+    },
+    {
+        "send_time": 1700605040,
+        "msgtype": "text",
+        "sender_name": "Priya Nair",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Let's go!\"}}"
+    },
+    {
+        "send_time": 1700605100,
+        "msgtype": "text",
+        "sender_name": "Rohan Iyer",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Onwards, team.\"}}"
+    },
+    {
+        "send_time": 1700605160,
+        "msgtype": "text",
+        "sender_name": "Sneha Kulkarni",
+        "msg_content": "{\"msgtype\":\"text\",\"text\":{\"content\":\"Looking forward to the user feedback.\"}}"
+    }
+]

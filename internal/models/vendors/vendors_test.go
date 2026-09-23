@@ -1,0 +1,249 @@
+package vendors
+
+import (
+	"bytes"
+	"strings"
+	"testing"
+
+	"github.com/ORG_PLACEHOLDER/EnterpriseRag/internal/models/api"
+	"github.com/ORG_PLACEHOLDER/EnterpriseRag/internal/models/catalog"
+	"github.com/ORG_PLACEHOLDER/EnterpriseRag/internal/types"
+)
+
+// expectedIDs is every built-in vendor this package links.
+var expectedIDs = []string{
+	"generic",
+	"openai", "anthropic", "gemini", "openrouter",
+}
+
+func TestAllVendorsRegistered(t *testing.T) {
+	if len(expectedIDs) != 5 {
+		t.Fatalf("expected 5 vendor ids in the spec, got %d", len(expectedIDs))
+	}
+	for _, id := range expectedIDs {
+		v, ok := catalog.Get(id)
+		if !ok {
+			t.Errorf("vendor %q is not registered", id)
+			continue
+		}
+		if v.ID != strings.ToLower(v.ID) {
+			t.Errorf("vendor %q: id is not lowercase", id)
+		}
+		if v.Name == "" {
+			t.Errorf("vendor %q: empty Name", id)
+		}
+		if len(v.Icon) == 0 || !bytes.HasPrefix(bytes.TrimSpace(v.Icon), []byte("<svg")) {
+			t.Errorf("vendor %q: icon is empty or not an <svg> document", id)
+		}
+		if len(v.Icon) > 6*1024 {
+			t.Errorf("vendor %q: icon is %d bytes, over the 6 KB budget", id, len(v.Icon))
+		}
+		if v.RequiresAuth && v.Auth == "" {
+			t.Errorf("vendor %q: RequiresAuth without Auth style", id)
+		}
+		if v.Auth == catalog.AuthSigned && v.Signer == nil {
+			t.Errorf("vendor %q: AuthSigned without Signer", id)
+		}
+		if !v.API.Known() {
+			t.Errorf("vendor %q: unknown default API %q", id, v.API)
+		}
+		if len(v.ModelTypes) == 0 {
+			t.Errorf("vendor %q: no ModelTypes", id)
+		}
+	}
+	for _, v := range catalog.List() {
+		found := false
+		for _, id := range expectedIDs {
+			if id == v.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("unexpected vendor %q registered", v.ID)
+		}
+	}
+}
+
+func TestEveryCatalogEntryResolves(t *testing.T) {
+	for _, id := range expectedIDs {
+		v, ok := catalog.Get(id)
+		if !ok {
+			t.Fatalf("vendor %q missing", id)
+		}
+		for _, m := range v.Models {
+			if m.ID == "" && m.Match == "" {
+				t.Errorf("%s: model entry %q has neither id nor match", id, m.Name)
+				continue
+			}
+			name := m.ID
+			if name == "" {
+				// Exercise pattern entries with a name that matches the glob.
+				name = strings.ReplaceAll(m.Match, "*", "x")
+			}
+			modelType := m.Type
+			if modelType == "" {
+				modelType = types.ModelTypeKnowledgeQA
+			}
+			r, err := catalog.Resolve(catalog.Ref{Provider: v.ID, Model: name, ModelType: modelType})
+			// An entry may declare that this build cannot serve it — a vendor
+			// whose second rerank dialect has no protocol package. Refusing is
+			// the point: the alternative is a request shaped for the wrong
+			// protocol. Such an entry must refuse, and must do it with a reason.
+			if bytes.Contains(m.Compat, []byte("unsupported_reason")) {
+				if err == nil {
+					t.Errorf("%s/%s: declares unsupported_reason but still resolves", id, name)
+				}
+				continue
+			}
+			if err != nil {
+				t.Errorf("%s/%s: resolve: %v", id, name, err)
+				continue
+			}
+			if !r.Cataloged {
+				t.Errorf("%s/%s: did not match its own catalog entry", id, name)
+			}
+			if modelType == types.ModelTypeKnowledgeQA && !r.API.Known() {
+				t.Errorf("%s/%s: resolved to unknown API %q", id, name, r.API)
+			}
+			if modelType == types.ModelTypeASR && !r.TranscriptionAPI.Known() {
+				t.Errorf("%s/%s: resolved to unknown transcription API %q", id, name, r.TranscriptionAPI)
+			}
+			if modelType == types.ModelTypeEmbedding && !r.EmbeddingAPI.Known() {
+				t.Errorf("%s/%s: resolved to unknown embedding API %q", id, name, r.EmbeddingAPI)
+			}
+			if modelType == types.ModelTypeEmbedding && m.ID != "" && m.Dimension <= 0 {
+				t.Logf("%s/%s: embedding entry without dimension", id, name)
+			}
+		}
+	}
+}
+
+// Model names that fall inside a chat family's glob must still resolve as
+// embedding and rerank rows. The family that catches them carries chat compat
+// (max_tokens_field and supports_temperature on gpt-5*), which the embedding
+// and rerank overlays reject, so an untyped lookup made these rows impossible
+// to build — new ids and dated snapshots first of all, since they are never in
+// models.json yet.
+func TestNamesInsideChatGlobsResolveForOtherTypes(t *testing.T) {
+	names := []struct{ provider, model string }{
+		{"generic", "gpt-5-embed"},
+		{"openai", "gpt-5-embed"},
+	}
+	for _, n := range names {
+		for _, modelType := range []types.ModelType{types.ModelTypeEmbedding, types.ModelTypeRerank} {
+			r, err := catalog.Resolve(catalog.Ref{Provider: n.provider, Model: n.model, ModelType: modelType})
+			if err != nil {
+				t.Errorf("%s/%s as %s: %v", n.provider, n.model, modelType, err)
+				continue
+			}
+			if r.Cataloged {
+				t.Errorf("%s/%s as %s matched %q, which is not an entry of that type",
+					n.provider, n.model, modelType, r.Spec.Name)
+			}
+		}
+	}
+}
+
+func TestDetectByURLRoundTrip(t *testing.T) {
+	for _, id := range expectedIDs {
+		v, _ := catalog.Get(id)
+		if len(v.URLPatterns) == 0 {
+			continue
+		}
+		u := v.GetDefaultURL(types.ModelTypeKnowledgeQA)
+		if !strings.HasPrefix(u, "https://") || strings.Contains(u, "{") {
+			continue // placeholder or http-only self-hosted default
+		}
+		if got := catalog.DetectByURL(u); got != v.ID {
+			t.Errorf("DetectByURL(%q) = %q, want %q", u, got, v.ID)
+		}
+	}
+}
+
+// TestOpenAIProtocolSelection pins the first-party / relay split: Responses on
+// api.openai.com, Chat Completions everywhere else, extra_config.api wins.
+func TestOpenAIProtocolSelection(t *testing.T) {
+	cases := []struct {
+		baseURL string
+		extra   map[string]string
+		want    api.API
+	}{
+		{"", nil, api.APIOpenAIResponses},
+		{"https://api.openai.com/v1", nil, api.APIOpenAIResponses},
+		{"https://API.openai.com/v1/", nil, api.APIOpenAIResponses},
+		{"https://my-relay.example.com/v1", nil, api.APIOpenAICompletions},
+		{"https://api.openai.com/v1", map[string]string{"api": "openai-completions"}, api.APIOpenAICompletions},
+	}
+	for _, tc := range cases {
+		r, err := catalog.Resolve(catalog.Ref{
+			Provider: "openai", Model: "gpt-5.5", BaseURL: tc.baseURL, Extra: tc.extra,
+		})
+		if err != nil {
+			t.Fatalf("resolve openai %q: %v", tc.baseURL, err)
+		}
+		if r.API != tc.want {
+			t.Errorf("openai base %q extra %v: api = %q, want %q", tc.baseURL, tc.extra, r.API, tc.want)
+		}
+	}
+}
+
+func resolve(t *testing.T, provider, model string) *catalog.Resolved {
+	t.Helper()
+	r, err := catalog.Resolve(catalog.Ref{Provider: provider, Model: model})
+	if err != nil {
+		t.Fatalf("resolve %s/%s: %v", provider, model, err)
+	}
+	return r
+}
+
+func TestFamilyExpectations(t *testing.T) {
+	if r := resolve(t, "openai", "gpt-5.2"); r.OpenAICompletions.SupportsTemperature {
+		t.Error("openai/gpt-5.2 should not support temperature")
+	}
+	if r := resolve(t, "openai", "gpt-5-turbo-future"); r.OpenAICompletions.SupportsTemperature || !r.Spec.Reasoning {
+		t.Error("openai gpt-5* family should be reasoning without temperature")
+	}
+	if r := resolve(t, "openai", "o4-mini"); r.ThinkingLevels.Supports(api.ReasoningOff) {
+		t.Error("openai/o4-mini should not allow thinking off")
+	}
+	// The original GPT-5 trio rejects reasoning_effort "none", so the picker
+	// must not offer thinking off. Only GPT-5.1 and later, which the gpt-5*
+	// pattern covers, accept it.
+	for _, model := range []string{"gpt-5", "gpt-5-mini", "gpt-5-nano"} {
+		if r := resolve(t, "openai", model); r.ThinkingLevels.Supports(api.ReasoningOff) {
+			t.Errorf("openai/%s should not allow thinking off", model)
+		}
+	}
+	if r := resolve(t, "gemini", "gemini-2.5-flash"); r.API != api.APIGoogleGenerativeAI {
+		t.Errorf("gemini/gemini-2.5-flash API = %q", r.API)
+	}
+	if r := resolve(t, "gemini", "gemini-3.8-flash"); r.GoogleGenerativeAI.ThinkingMode != catalog.GoogleThinkingLevel {
+		t.Errorf("gemini/gemini-3.8-flash thinking mode = %q", r.GoogleGenerativeAI.ThinkingMode)
+	}
+	if r := resolve(t, "anthropic", "claude-opus-5"); r.AnthropicMessages.ThinkingMode !=
+		catalog.AnthropicThinkingAdaptive || !r.AnthropicMessages.SupportsEffort {
+		t.Error("anthropic/claude-opus-5 should use adaptive thinking with effort")
+	}
+	if r := resolve(t, "anthropic", "claude-sonnet-4-5"); r.AnthropicMessages.ThinkingMode !=
+		catalog.AnthropicThinkingBudget {
+		t.Error("anthropic/claude-sonnet-4-5 should keep budget thinking")
+	}
+	if r := resolve(t, "anthropic", "claude-sonnet-4-5-20250929"); !r.Cataloged {
+		t.Error("anthropic dated alias should resolve to the catalog entry")
+	}
+	if r := resolve(t, "openrouter", "anthropic/claude-haiku-4.5"); r.OpenAICompletions.CacheControlFormat !=
+		"anthropic" {
+		t.Error("openrouter anthropic/* family should use anthropic cache_control")
+	}
+}
+
+func TestHooks(t *testing.T) {
+	generic, _ := catalog.Get("generic")
+	if err := generic.ValidateConfig(&catalog.Config{ModelName: "m"}); err == nil {
+		t.Error("generic validate should require a base URL")
+	}
+	if err := generic.ValidateConfig(&catalog.Config{BaseURL: "http://x/v1", ModelName: "m"}); err != nil {
+		t.Errorf("generic validate: %v", err)
+	}
+}

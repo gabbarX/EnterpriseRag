@@ -1,0 +1,11 @@
+# Local-run override: maps the ORG_PLACEHOLDER image names onto the locally
+# built lowercase ones. Docker rejects uppercase repository names, so the
+# committed compose file cannot be used directly until ORG_PLACEHOLDER is
+# substituted with a real lowercase org. Lives in gitignored scratch.
+services:
+  frontend:
+    image: local-qa/enterpriserag-ui:latest
+  app:
+    image: local-qa/enterpriserag-app:latest
+  docreader:
+    image: local-qa/enterpriserag-docreader:latest

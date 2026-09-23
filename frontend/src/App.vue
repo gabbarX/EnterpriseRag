@@ -1,0 +1,288 @@
+<script setup lang="ts">
+import { computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { MessagePlugin, NotifyPlugin } from 'tdesign-vue-next'
+import ProtectedResourcePreview from '@/components/ProtectedResourcePreview.vue'
+import ManualKnowledgeEditor from '@/components/manual-knowledge-editor.vue'
+import UploadConfirmHost from '@/components/UploadConfirmHost.vue'
+import { useAuthStore } from '@/stores/auth'
+import { useSettingsStore } from '@/stores/settings'
+import { getCurrentUser, userInfoFromApi } from '@/api/auth'
+import { consumePendingTenantSwitchToast } from '@/utils/tenantSwitch'
+import { useRoleLabel } from '@/composables/useRoleLabel'
+import { notifyLoginSuccess } from '@/utils/loginNotify'
+import { renderWorkspaceNotifyContent } from '@/utils/workspaceNotifyContent'
+
+import enUSConfig from 'tdesign-vue-next/esm/locale/en_US'
+
+const { formatRole, roleIcon } = useRoleLabel()
+const router = useRouter()
+const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
+
+const tdGlobalConfig = computed(() => enUSConfig)
+
+const decodeOIDCResult = (encoded: string) => {
+  const normalized = encoded.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4)
+  const binary = window.atob(padded)
+  const bytes = Uint8Array.from(binary, char => char.charCodeAt(0))
+  return JSON.parse(new TextDecoder().decode(bytes))
+}
+
+const clearOIDCCallbackState = (path = '/') => {
+  window.history.replaceState({}, document.title, path)
+}
+
+const syncOIDCUserContext = async () => {
+  const currentUserResponse = await getCurrentUser()
+  if (!currentUserResponse.success || !currentUserResponse.data?.user) {
+    throw new Error(currentUserResponse.message || 'Failed to get user information')
+  }
+
+  const { user, tenant, memberships, capabilities } = currentUserResponse.data
+  authStore.setUser(userInfoFromApi(user, tenant?.id))
+  if (tenant) {
+    authStore.setTenant({
+      id: String(tenant.id) || '',
+      name: tenant.name || '',
+      owner_id: tenant.owner_id || user.id || '',
+      description: tenant.description,
+      status: tenant.status,
+      business: tenant.business,
+      storage_quota: tenant.storage_quota,
+      storage_used: tenant.storage_used,
+      created_at: tenant.created_at || new Date().toISOString(),
+      updated_at: tenant.updated_at || new Date().toISOString()
+    })
+  } else {
+    authStore.setTenant(null)
+  }
+  // Refresh memberships so currentTenantRole reflects any role change
+  // since the last login (e.g. an Owner demoted us to Viewer in a
+  // peer tenant). Without this, memberships stay frozen at the
+  // login-time snapshot and the UI silently lies about our authority.
+  if (Array.isArray(memberships)) {
+    authStore.setMemberships(memberships)
+  }
+  if (typeof capabilities?.can_create_tenant === 'boolean') {
+    authStore.setCanCreateTenant(capabilities.can_create_tenant)
+  }
+  // Same active-vs-home reconciliation as Login.vue: if the OIDC login
+  // landed us in a non-home tenant (because the backend honoured a
+  // remembered last-active-tenant preference) make sure X-Tenant-ID
+  // override is set; otherwise drop any stale override.
+  const activeIdNum = tenant?.id != null ? Number(tenant.id) : NaN
+  const homeIdNum = user.tenant_id != null ? Number(user.tenant_id) : NaN
+  if (Number.isFinite(activeIdNum) && Number.isFinite(homeIdNum) && activeIdNum !== homeIdNum) {
+    authStore.setSelectedTenant(activeIdNum, tenant?.name || null)
+  } else {
+    authStore.setSelectedTenant(null, null)
+  }
+}
+
+const persistOIDCLoginResponse = async (response: any) => {
+  if (!response.token) {
+    throw new Error(response.message || 'OIDC login failed')
+  }
+
+  authStore.setToken(response.token)
+  if (response.refresh_token) {
+    authStore.setRefreshToken(response.refresh_token)
+  }
+
+  await syncOIDCUserContext()
+
+  const pendingInviteToken = sessionStorage.getItem('enterpriserag_pending_invite_token')
+  if (pendingInviteToken) {
+    sessionStorage.removeItem('enterpriserag_pending_invite_token')
+    const result = await authStore.acceptInvitationByTokenAndRefresh(pendingInviteToken)
+    await nextTick()
+    if (result.ok) MessagePlugin.success('You have joined the team.')
+    else MessagePlugin.warning('Ask your inviter to send a new link, or sign in with an existing account.')
+    router.replace('/platform/knowledge-bases')
+    return
+  }
+
+  await nextTick()
+  router.replace(authStore.hasValidTenant ? '/platform/knowledge-bases' : '/onboarding/workspace')
+}
+
+const handleGlobalOIDCCallback = async () => {
+  const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : ''
+  if (!hash) return
+
+  const params = new URLSearchParams(hash)
+  const oidcError = params.get('oidc_error')
+  const oidcErrorDescription = params.get('oidc_error_description')
+  const oidcResult = params.get('oidc_result')
+
+  if (!oidcError && !oidcResult) return
+
+  if (oidcError) {
+    clearOIDCCallbackState('/login')
+    await router.replace('/login')
+    MessagePlugin.error(oidcErrorDescription || 'OIDC login failed')
+    return
+  }
+
+  try {
+    if (!oidcResult) {
+      clearOIDCCallbackState('/login')
+      await router.replace('/login')
+      MessagePlugin.error('OIDC login failed')
+      return
+    }
+
+    const response = decodeOIDCResult(oidcResult)
+    if (response.success) {
+      clearOIDCCallbackState('/')
+      await persistOIDCLoginResponse(response)
+      notifyLoginSuccess(response, formatRole, roleIcon)
+      return
+    }
+
+    clearOIDCCallbackState('/login')
+    await router.replace('/login')
+    MessagePlugin.error(response.message || 'OIDC login failed')
+  } catch (error: any) {
+    console.error('Global OIDC callback handling failed:', error)
+    authStore.logout()
+    clearOIDCCallbackState('/login')
+    await router.replace('/login')
+    MessagePlugin.error(error.message || 'OIDC login failed')
+  }
+}
+
+let updateCheckTimer: ReturnType<typeof setInterval> | null = null
+
+// Pending invitations poll: fires once on mount (logged-in case) and
+// then every 2 minutes. Light enough to keep the avatar-row badge
+// near-live without slamming the API, and avoids the cost of a
+// dedicated SSE/WebSocket connection. Stopped on logout via the
+// computed below.
+let invitationPollTimer: ReturnType<typeof setInterval> | null = null
+const INVITATION_POLL_INTERVAL_MS = 2 * 60 * 1000
+
+const startInvitationPolling = () => {
+  if (invitationPollTimer || !authStore.isLoggedIn) return
+  // Immediate fetch so the badge is correct before the first tick.
+  authStore.fetchPendingInvitationCount()
+  invitationPollTimer = setInterval(() => {
+    if (!authStore.isLoggedIn) return
+    authStore.fetchPendingInvitationCount()
+  }, INVITATION_POLL_INTERVAL_MS)
+}
+
+const stopInvitationPolling = () => {
+  if (invitationPollTimer) {
+    clearInterval(invitationPollTimer)
+    invitationPollTimer = null
+  }
+}
+
+// React to login/logout via the store's isLoggedIn computed. Watching
+// here (rather than only on first mount) handles the OIDC callback
+// flow where the user logs in well after App.vue has already mounted.
+watch(
+  () => authStore.isLoggedIn,
+  (logged) => {
+    if (logged) startInvitationPolling()
+    else stopInvitationPolling()
+  },
+  { immediate: true },
+)
+
+const showPendingTenantSwitchToast = () => {
+  const pending = consumePendingTenantSwitchToast()
+  if (!pending) return
+  // The chip renderer splits on the {name} / {role} placeholders, so the
+  // template keeps them intact.
+  const template = pending.role
+    ? 'You are now in {name} as {role}'
+    : 'You are now in {name}'
+  NotifyPlugin.success({
+    title: 'Workspace switched',
+    content: renderWorkspaceNotifyContent({
+      template,
+      name: pending.name,
+      roleLabel: pending.role,
+      roleEnum: pending.roleEnum,
+      roleIconName: pending.roleEnum ? roleIcon(pending.roleEnum) : undefined,
+    }),
+    duration: 6000,
+    closeBtn: true,
+  })
+}
+
+onMounted(() => {
+  handleGlobalOIDCCallback()
+  showPendingTenantSwitchToast()
+
+  // Auto check for updates on startup
+  setTimeout(() => {
+    if (settingsStore.isAutoCheckUpdateEnabled) {
+      // @ts-ignore
+      if (window.go && window.go.main && window.go.main.App && window.go.main.App.AutoCheckForUpdates) {
+        // @ts-ignore
+        window.go.main.App.AutoCheckForUpdates()
+      }
+    }
+  }, 2000)
+
+  // Periodically check for updates (every 4 hours)
+  updateCheckTimer = setInterval(() => {
+    if (settingsStore.isAutoCheckUpdateEnabled) {
+      // @ts-ignore
+      if (window.go && window.go.main && window.go.main.App && window.go.main.App.AutoCheckForUpdates) {
+        // @ts-ignore
+        window.go.main.App.AutoCheckForUpdates()
+      }
+    }
+  }, 4 * 60 * 60 * 1000)
+})
+
+onUnmounted(() => {
+  if (updateCheckTimer) {
+    clearInterval(updateCheckTimer)
+  }
+  stopInvitationPolling()
+})
+
+</script>
+<template>
+  <t-config-provider :globalConfig="tdGlobalConfig">
+    <div id="app">
+      <RouterView />
+      <ManualKnowledgeEditor />
+      <ProtectedResourcePreview />
+      <UploadConfirmHost />
+    </div>
+  </t-config-provider>
+</template>
+<style>
+html {
+  color-scheme: light dark;
+}
+
+body,
+html,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  font-family: var(--app-font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--td-bg-color-page);
+  color: var(--td-text-color-primary);
+}
+
+#app {
+  isolation: isolate;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+</style>

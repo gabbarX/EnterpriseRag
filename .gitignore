@@ -1,0 +1,41 @@
+# NOTE: .env is intentionally NOT ignored (tracked on purpose).
+
+# Go build output
+/enterpriserag
+/enterpriserag-lite
+*.exe
+*.test
+*.out
+coverage.*
+
+# Air hot-reload
+tmp/
+
+# Lite build: frontend copied into web/, runtime data
+/web/
+/data/
+
+# Node / frontend
+**/node_modules/
+frontend/dist/
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/.venv/
+
+# Logs / temp
+logs/
+temp/
+*.log
+*.pid
+
+# Local tool state
+.code-review-graph/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/

@@ -1,0 +1,733 @@
+golangci-lint run
+level=warning msg="[runner/nolint_filter] Found unknown linters in //nolint directives: staticcheck — explicit nil ctx test"
+cmd/download/duckdb/duckdb.go:24:19: Error return value of `sqlDB.Close` is not checked (errcheck)
+	defer sqlDB.Close()
+	                 ^
+docreader/client/client_test.go:26:33: Error return value of `client.Close` is not checked (errcheck)
+	t.Cleanup(func() { client.Close() })
+	                               ^
+internal/agent/skills/loader.go:238:18: Error return value of `root.Close` is not checked (errcheck)
+	defer root.Close()
+	                ^
+internal/agent/skills/shell_staging.go:93:14: Error return value of `fmt.Fprintf` is not checked (errcheck)
+		fmt.Fprintf(digest, "%d:%s:%d:", len(rel), rel, len(file.Content))
+		           ^
+internal/agent/skills/skills_test.go:203:20: Error return value of `os.RemoveAll` is not checked (errcheck)
+	defer os.RemoveAll(tmpDir)
+	                  ^
+internal/agent/skills/skills_test.go:248:20: Error return value of `os.RemoveAll` is not checked (errcheck)
+	defer os.RemoveAll(tmpDir)
+	                  ^
+internal/agent/skills/skills_test.go:301:20: Error return value of `os.RemoveAll` is not checked (errcheck)
+	defer os.RemoveAll(tmpDir)
+	                  ^
+internal/application/repository/retriever/elasticsearch/v7/repository.go:139:22: Error return value of `res.Body.Close` is not checked (errcheck)
+	defer res.Body.Close()
+	                    ^
+internal/application/repository/retriever/elasticsearch/v7/repository.go:174:28: Error return value of `createRes.Body.Close` is not checked (errcheck)
+	defer createRes.Body.Close()
+	                          ^
+internal/application/repository/retriever/elasticsearch/v7/repository.go:704:27: Error return value of `response.Body.Close` is not checked (errcheck)
+	defer response.Body.Close()
+	                         ^
+internal/application/repository/retriever/elasticsearch/v7/repository.go:1352:23: Error return value of `res.Body.Close` is not checked (errcheck)
+		defer res.Body.Close()
+		                    ^
+internal/application/repository/retriever/elasticsearch/v7/repository.go:1387:23: Error return value of `res.Body.Close` is not checked (errcheck)
+		defer res.Body.Close()
+		                    ^
+internal/application/repository/retriever/neo4j/repository.go:62:21: Error return value of `session.Close` is not checked (errcheck)
+	defer session.Close(ctx)
+	                   ^
+internal/application/repository/retriever/neo4j/repository.go:124:21: Error return value of `session.Close` is not checked (errcheck)
+	defer session.Close(ctx)
+	                   ^
+internal/application/repository/retriever/neo4j/repository.go:174:21: Error return value of `session.Close` is not checked (errcheck)
+	defer session.Close(ctx)
+	                   ^
+internal/application/service/file/backend_scoped_test.go:31:20: Error return value of `reader.Close` is not checked (errcheck)
+	defer reader.Close()
+	                  ^
+internal/application/service/file/local.go:83:17: Error return value of `src.Close` is not checked (errcheck)
+	defer src.Close()
+	               ^
+internal/application/service/file/local.go:92:17: Error return value of `dst.Close` is not checked (errcheck)
+	defer dst.Close()
+	               ^
+internal/application/service/file/local.go:197:17: Error return value of `src.Close` is not checked (errcheck)
+	defer src.Close()
+	               ^
+internal/application/service/file/local.go:203:17: Error return value of `dst.Close` is not checked (errcheck)
+	defer dst.Close()
+	               ^
+internal/application/service/file/local_copy_test.go:35:16: Error return value of `rc.Close` is not checked (errcheck)
+	defer rc.Close()
+	              ^
+internal/application/service/file/minio.go:135:17: Error return value of `src.Close` is not checked (errcheck)
+	defer src.Close()
+	               ^
+internal/config/config.go:538:18: Error return value of `viper.ReadConfig` is not checked (errcheck)
+	viper.ReadConfig(strings.NewReader(result))
+	                ^
+internal/database/migration.go:122:15: Error return value of `sqlDB.Close` is not checked (errcheck)
+			sqlDB.Close()
+			           ^
+internal/database/migration.go:145:15: Error return value of `m.Close` is not checked (errcheck)
+	defer m.Close()
+	             ^
+internal/database/migration.go:318:15: Error return value of `m.Close` is not checked (errcheck)
+	defer m.Close()
+	             ^
+internal/datasource/connector/notion/client_test.go:34:29: Error return value of `(*encoding/json.Encoder).Encode` is not checked (errcheck)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+			                         ^
+internal/datasource/connector/notion/client_test.go:41:28: Error return value of `(*encoding/json.Encoder).Encode` is not checked (errcheck)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+		                         ^
+internal/datasource/connector/notion/client_test.go:51:28: Error return value of `(*encoding/json.Encoder).Encode` is not checked (errcheck)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+		                         ^
+internal/datasource/connector/notion/connector.go:529:17: Error return value of `json.Unmarshal` is not checked (errcheck)
+		json.Unmarshal(record.RawProperties, &props)
+		              ^
+internal/datasource/connector/notion/connector.go:617:18: Error return value of `json.Unmarshal` is not checked (errcheck)
+			json.Unmarshal(record.RawProperties, &props)
+			              ^
+internal/datasource/connector/notion/connector.go:743:18: Error return value of `json.Unmarshal` is not checked (errcheck)
+			json.Unmarshal(blocks[i].RawContent, &file)
+			              ^
+internal/datasource/connector/rss/connector_test.go:61:14: Error return value of `fmt.Fprintf` is not checked (errcheck)
+		fmt.Fprintf(w, `<!DOCTYPE html><html><head><title>%s</title></head>`+
+		           ^
+internal/datasource/connector/rss/connector_test.go:78:14: Error return value of `fmt.Fprintf` is not checked (errcheck)
+		fmt.Fprintf(w, `<?xml version="1.0"?>
+		           ^
+internal/infrastructure/docparser/mineru_cloud_converter.go:470:16: Error return value of `rc.Close` is not checked (errcheck)
+	defer rc.Close()
+	              ^
+internal/infrastructure/web_fetch/fetcher.go:229:23: Error return value of `resp.Body.Close` is not checked (errcheck)
+	defer resp.Body.Close()
+	                     ^
+internal/infrastructure/web_fetch/fetcher_ssrf_test.go:16:13: Error return value of `fmt.Fprint` is not checked (errcheck)
+		fmt.Fprint(w, "<html><body>WEKNORA_INTERNAL_CANARY_178193</body></html>")
+		          ^
+internal/logger/llm_logger.go:109:15: Error return value of `f.Close` is not checked (errcheck)
+	defer f.Close()
+	             ^
+internal/mcp/client.go:372:17: Error return value of `c.client.Close` is not checked (errcheck)
+		c.client.Close()
+		              ^
+internal/mcp/manager.go:201:20: Error return value of `client.Disconnect` is not checked (errcheck)
+		client.Disconnect()
+		                 ^
+internal/sandbox/e2b_exec_timeout_test.go:121:29: Error return value of `response.Body.Close` is not checked (errcheck)
+			defer response.Body.Close()
+			                         ^
+internal/sandbox/e2b_exec_timeout_test.go:146:27: Error return value of `response.Body.Close` is not checked (errcheck)
+	defer response.Body.Close()
+	                         ^
+internal/utils/httputil.go:29:23: Error return value of `resp.Body.Close` is not checked (errcheck)
+	defer resp.Body.Close()
+	                     ^
+internal/utils/security_redirect_test.go:43:17: Error return value of `resp.Body.Close` is not checked (errcheck)
+	resp.Body.Close()
+	               ^
+internal/utils/security_test.go:206:13: Error return value of `os.Setenv` is not checked (errcheck)
+			os.Setenv("SSRF_WHITELIST", tt.whitelist)
+			         ^
+internal/utils/security_test.go:208:16: Error return value of `os.Unsetenv` is not checked (errcheck)
+				os.Unsetenv("SSRF_WHITELIST")
+				           ^
+internal/utils/security_test.go:243:13: Error return value of `os.Setenv` is not checked (errcheck)
+			os.Setenv("SSRF_WHITELIST", tc.main)
+			         ^
+internal/utils/security_test.go:244:13: Error return value of `os.Setenv` is not checked (errcheck)
+			os.Setenv("SSRF_WHITELIST_EXTRA", tc.extra)
+			         ^
+internal/utils/security_test.go:246:16: Error return value of `os.Unsetenv` is not checked (errcheck)
+				os.Unsetenv("SSRF_WHITELIST")
+				           ^
+internal/utils/security_test.go:247:16: Error return value of `os.Unsetenv` is not checked (errcheck)
+				os.Unsetenv("SSRF_WHITELIST_EXTRA")
+				           ^
+internal/agent/tools/scope_authorization_test.go:53:1: File is not properly formatted (gofmt)
+				"doc-1": []*types.KnowledgeTag{testKnowledgeTag("tag-z")},
+^
+internal/agent/skills/loader.go:283:1: File is not properly formatted (gofumpt)
+
+^
+internal/agent/skills/manager.go:42:1: File is not properly formatted (gofumpt)
+const pythonPathEnvVar = "PYTHONPATH"
+^
+internal/agent/skills/skill_frontmatter.go:42:18: inline: Constant reflect.Ptr should be inlined (govet)
+	if rv.Kind() != reflect.Ptr || rv.IsNil() {
+	                ^
+internal/handler/knowledgebase_request_test.go:41:20: inline: Constant reflect.Ptr should be inlined (govet)
+		for rt.Kind() == reflect.Ptr {
+		                 ^
+internal/agent/approval/gate.go:217:2: ineffectual assignment to backoff (ineffassign)
+	backoff := time.Second
+	^
+internal/agent/approval/gate.go:284:5: ineffectual assignment to backoff (ineffassign)
+				backoff = maxBackoff
+				^
+internal/application/service/chat_pipeline/rerank.go:440:2: ineffectual assignment to sourceWeight (ineffassign)
+	sourceWeight := 1.0
+	^
+internal/application/service/knowledge_create.go:496:4: ineffectual assignment to name (ineffassign)
+			name := strings.TrimPrefix(part, "filename=")
+			^
+internal/application/service/knowledge_faq_import.go:460:2: ineffectual assignment to validEntryIndices (ineffassign)
+	validEntryIndices := make([]int, 0, len(entries))
+	^
+internal/application/service/knowledge_faq_import.go:1068:5: ineffectual assignment to isMergeCandidate (ineffassign)
+				isMergeCandidate = false
+				^
+internal/application/service/knowledgebase_search_results.go:269:5: ineffectual assignment to matchType (ineffassign)
+				matchType := types.MatchTypeParentChunk
+				^
+internal/application/service/retriever/registry_test.go:105:3: ineffectual assignment to all (ineffassign)
+		all = append(all, newMock(types.QdrantRetrieverEngineType))
+		^
+internal/handler/knowledge.go:1100:2: ineffectual assignment to ctx (ineffassign)
+	ctx := c.Request.Context()
+	^
+internal/handler/knowledge.go:1150:2: ineffectual assignment to ctx (ineffassign)
+	ctx := c.Request.Context()
+	^
+internal/handler/knowledge.go:1225:2: ineffectual assignment to ctx (ineffassign)
+	ctx := c.Request.Context()
+	^
+internal/infrastructure/chunker/heuristic_splitter.go:83:5: ineffectual assignment to chunkStart (ineffassign)
+				chunkStart = curEnd
+				^
+internal/mcp/manager.go:106:3: ineffectual assignment to principal (ineffassign)
+		principal, _ = types.PrincipalFromContext(ctx)
+		^
+internal/types/interfaces/agent.go:14:1: The line is 135 characters long, which exceeds the maximum of 120 characters. (lll)
+	Type      string                 `json:"type"`      // "thought", "tool_call", "tool_result", "final_answer", "error", "references"
+^
+internal/types/interfaces/chunk.go:47:1: The line is 122 characters long, which exceeds the maximum of 120 characters. (lll)
+	//   - FAQ: sorts by updated_at, searchField can be "standard_question", "similar_questions", "answers", or "" for all
+^
+internal/types/interfaces/chunk.go:92:1: The line is 121 characters long, which exceeds the maximum of 120 characters. (lll)
+	SaveChunkRevision(ctx context.Context, chunk *types.Chunk, revision *types.ChunkRevision, expectedRevision int) error
+^
+internal/types/interfaces/chunk.go:119:1: The line is 127 characters long, which exceeds the maximum of 120 characters. (lll)
+	DeleteChunksByTagID(ctx context.Context, tenantID uint64, kbID string, tagID string, excludeIDs []string) ([]string, error)
+^
+internal/types/interfaces/chunk.go:129:1: The line is 124 characters long, which exceeds the maximum of 120 characters. (lll)
+	ListAllFAQChunksWithMetadataByKnowledgeBaseID(ctx context.Context, tenantID uint64, kbID string) ([]*types.Chunk, error)
+^
+internal/types/interfaces/chunk.go:132:1: The line is 153 characters long, which exceeds the maximum of 120 characters. (lll)
+	FindFAQChunkWithDuplicateQuestion(ctx context.Context, tenantID uint64, kbID string, excludeChunkID string, questions []string) (*types.Chunk, error)
+^
+internal/types/interfaces/chunk.go:138:1: The line is 160 characters long, which exceeds the maximum of 120 characters. (lll)
+	UpdateChunkFlagsBatch(ctx context.Context, tenantID uint64, kbID string, setFlags map[string]types.ChunkFlags, clearFlags map[string]types.ChunkFlags) error
+^
+internal/types/interfaces/chunk.go:142:1: The line is 223 characters long, which exceeds the maximum of 120 characters. (lll)
+	UpdateChunkFieldsByTagID(ctx context.Context, tenantID uint64, kbID string, tagID string, isEnabled *bool, setFlags types.ChunkFlags, clearFlags types.ChunkFlags, newTagID *string, excludeIDs []string) ([]string, error)
+^
+internal/types/interfaces/chunk.go:144:1: The line is 144 characters long, which exceeds the maximum of 120 characters. (lll)
+	FAQChunkDiff(ctx context.Context, srcTenantID uint64, srcKBID string, dstTenantID uint64, dstKBID string) (*types.FAQChunkDiffResult, error)
+^
+internal/types/interfaces/chunk.go:146:1: The line is 121 characters long, which exceeds the maximum of 120 characters. (lll)
+	ListFAQChunkStatusByIDs(ctx context.Context, tenantID uint64, ids []string) (map[string]*types.FAQChunkStatus, error)
+^
+internal/types/interfaces/chunk.go:151:1: The line is 157 characters long, which exceeds the maximum of 120 characters. (lll)
+	ListRecommendedFAQChunks(ctx context.Context, tenantID uint64, kbIDs []string, knowledgeIDs []string, tagIDs []string, limit int) ([]*types.Chunk, error)
+^
+internal/types/interfaces/chunk.go:156:1: The line is 153 characters long, which exceeds the maximum of 120 characters. (lll)
+	ListRecentDocumentChunksWithQuestions(ctx context.Context, tenantID uint64, kbIDs []string, knowledgeIDs []string, limit int) ([]*types.Chunk, error)
+^
+internal/types/interfaces/chunk.go:199:1: The line is 139 characters long, which exceeds the maximum of 120 characters. (lll)
+	UpdateDocumentChunk(ctx context.Context, chunkID string, content *string, isEnabled *bool, expectedRevision *int) (*types.Chunk, error)
+^
+internal/types/interfaces/chunk.go:205:1: The line is 134 characters long, which exceeds the maximum of 120 characters. (lll)
+	UpsertGeneratedQuestion(ctx context.Context, chunkID string, questionID string, question string) (*types.GeneratedQuestion, error)
+^
+internal/types/interfaces/custom_agent.go:84:1: The line is 175 characters long, which exceeds the maximum of 120 characters. (lll)
+	GetSuggestedQuestions(ctx context.Context, agentID string, kbIDs []string, knowledgeIDs []string, tagScopes []types.TagScope, limit int) ([]types.SuggestedQuestion, error)
+^
+internal/types/interfaces/custom_agent.go:89:1: The line is 184 characters long, which exceeds the maximum of 120 characters. (lll)
+	GetKnowledgeSuggestedQuestions(ctx context.Context, agentID string, kbIDs []string, knowledgeIDs []string, tagScopes []types.TagScope, limit int) ([]types.SuggestedQuestion, error)
+^
+internal/types/interfaces/embed_channel.go:22:1: The line is 126 characters long, which exceeds the maximum of 120 characters. (lll)
+	Create(ctx context.Context, tenantID uint64, agentID string, req *types.EmbedChannel) (*types.EmbedChannel, string, error)
+^
+internal/types/interfaces/embed_channel.go:25:1: The line is 260 characters long, which exceeds the maximum of 120 characters. (lll)
+	Update(ctx context.Context, tenantID uint64, id string, req *types.EmbedChannel, enabled *bool, showSuggested *bool, allowWebSearch *bool, allowFileUpload *bool, defaultLocale *string, webhookURL *string, webhookSecret *string) (*types.EmbedChannel, error)
+^
+internal/types/interfaces/embed_channel.go:31:1: The line is 127 characters long, which exceeds the maximum of 120 characters. (lll)
+	IssuePreviewSession(ctx context.Context, tenantID uint64, channelID string) (sessionToken string, expiresIn int, err error)
+^
+internal/types/interfaces/knowledge.go:45:1: The line is 124 characters long, which exceeds the maximum of 120 characters. (lll)
+	CreateKnowledgeFromPassage(ctx context.Context, kbID string, passage []string, channel string) (*types.Knowledge, error)
+^
+internal/types/interfaces/knowledge.go:47:1: The line is 128 characters long, which exceeds the maximum of 120 characters. (lll)
+	CreateKnowledgeFromPassageSync(ctx context.Context, kbID string, passage []string, channel string) (*types.Knowledge, error)
+^
+internal/types/interfaces/knowledge.go:70:1: The line is 123 characters long, which exceeds the maximum of 120 characters. (lll)
+	// GetKnowledgeBatchWithSharedAccess retrieves knowledge by IDs including items from shared KBs the user has access to.
+^
+internal/types/interfaces/knowledge.go:179:1: The line is 127 characters long, which exceeds the maximum of 120 characters. (lll)
+	UpdateFAQEntry(ctx context.Context, kbID string, entrySeqID int64, payload *types.FAQEntryPayload) (*types.FAQEntry, error)
+^
+internal/types/interfaces/knowledge.go:238:1: The line is 136 characters long, which exceeds the maximum of 120 characters. (lll)
+	SearchKnowledge(ctx context.Context, keyword string, offset, limit int, fileTypes []string) ([]*types.Knowledge, bool, int64, error)
+^
+internal/types/interfaces/knowledge.go:239:1: The line is 126 characters long, which exceeds the maximum of 120 characters. (lll)
+	// SearchKnowledgeForScopes searches knowledge within the given (tenant_id, kb_id) scopes (e.g. for shared agent context).
+^
+internal/types/interfaces/knowledge.go:240:1: The line is 182 characters long, which exceeds the maximum of 120 characters. (lll)
+	SearchKnowledgeForScopes(ctx context.Context, scopes []types.KnowledgeSearchScope, keyword string, offset, limit int, fileTypes []string) ([]*types.Knowledge, bool, int64, error)
+^
+internal/types/interfaces/knowledge.go:338:1: The line is 146 characters long, which exceeds the maximum of 120 characters. (lll)
+	SearchKnowledge(ctx context.Context, tenantID uint64, keyword string, offset, limit int, fileTypes []string) ([]*types.Knowledge, bool, error)
+^
+internal/types/interfaces/knowledge.go:342:1: The line is 124 characters long, which exceeds the maximum of 120 characters. (lll)
+	FindByMetadataKey(ctx context.Context, tenantID uint64, kbID string, key string, value string) (*types.Knowledge, error)
+^
+internal/types/interfaces/knowledge.go:345:1: The line is 133 characters long, which exceeds the maximum of 120 characters. (lll)
+	FindByMetadataKeyPrefix(ctx context.Context, tenantID uint64, kbID string, key string, prefix string) ([]*types.Knowledge, error)
+^
+internal/types/interfaces/knowledge.go:356:1: The line is 125 characters long, which exceeds the maximum of 120 characters. (lll)
+	// SearchKnowledgeInScopes searches knowledge items by keyword within the given (tenant_id, kb_id) scopes (own + shared).
+^
+internal/types/interfaces/knowledge.go:357:1: The line is 181 characters long, which exceeds the maximum of 120 characters. (lll)
+	SearchKnowledgeInScopes(ctx context.Context, scopes []types.KnowledgeSearchScope, keyword string, offset, limit int, fileTypes []string) ([]*types.Knowledge, bool, int64, error)
+^
+internal/types/interfaces/knowledgebase.go:50:1: The line is 131 characters long, which exceeds the maximum of 120 characters. (lll)
+	// FillKnowledgeBaseCounts fills KnowledgeCount, ChunkCount, IsProcessing, ProcessingCount for the given KB (uses kb.TenantID).
+^
+internal/types/interfaces/memory.go:67:1: The line is 154 characters long, which exceeds the maximum of 120 characters. (lll)
+	ClaimPendingSessions(ctx context.Context, scope MemoryScope, fallbackSession, leaseID string, ttl time.Duration) (*types.MemoryExtractionBatch, error)
+^
+internal/types/interfaces/memory.go:70:1: The line is 173 characters long, which exceeds the maximum of 120 characters. (lll)
+	CheckpointExtraction(ctx context.Context, scope MemoryScope, leaseID string, session types.MemoryExtractionSession, cursor types.MemoryMessageCursor, drained bool) error
+^
+internal/types/interfaces/memory.go:95:1: The line is 123 characters long, which exceeds the maximum of 120 characters. (lll)
+	ListItems(ctx context.Context, scope MemoryScope, status string, limit, offset int) ([]*types.MemoryItem, int64, error)
+^
+internal/types/interfaces/memory.go:143:1: The line is 122 characters long, which exceeds the maximum of 120 characters. (lll)
+	ItemEmbeddings(ctx context.Context, scope MemoryScope, itemIDs []string, modelID string) (map[string][]float32, error)
+^
+internal/types/interfaces/memory.go:159:1: The line is 122 characters long, which exceeds the maximum of 120 characters. (lll)
+	ItemsMissingEmbeddings(ctx context.Context, scope MemoryScope, modelID string, limit int) ([]*types.MemoryItem, error)
+^
+internal/types/interfaces/memory.go:206:1: The line is 131 characters long, which exceeds the maximum of 120 characters. (lll)
+	ListFamiliarDocs(ctx context.Context, scope MemoryScope, minHits, limit, offset int) ([]*types.MemoryDocAffinity, int64, error)
+^
+internal/types/interfaces/message.go:104:1: The line is 146 characters long, which exceeds the maximum of 120 characters. (lll)
+	ListMessagesBySessionAfterCursor(ctx context.Context, sessionID string, cursor types.MemoryMessageCursor, limit int) ([]*types.Message, error)
+^
+internal/types/interfaces/message.go:148:1: The line is 159 characters long, which exceeds the maximum of 120 characters. (lll)
+	SearchMessagesByKeyword(ctx context.Context, tenantID uint64, ownerID, keyword string, sessionIDs []string, limit int) ([]*types.MessageWithSession, error)
+^
+internal/types/interfaces/organization.go:18:1: The line is 142 characters long, which exceeds the maximum of 120 characters. (lll)
+	CreateOrganization(ctx context.Context, userID string, tenantID uint64, req *types.CreateOrganizationRequest) (*types.Organization, error)
+^
+internal/types/interfaces/organization.go:22:1: The line is 153 characters long, which exceeds the maximum of 120 characters. (lll)
+	UpdateOrganization(ctx context.Context, id string, userID string, tenantID uint64, req *types.UpdateOrganizationRequest) (*types.Organization, error)
+^
+internal/types/interfaces/organization.go:28:1: The line is 132 characters long, which exceeds the maximum of 120 characters. (lll)
+	AddTenantMember(ctx context.Context, orgID string, tenantID uint64, representativeUserID string, role types.OrgMemberRole) error
+^
+internal/types/interfaces/organization.go:29:1: The line is 134 characters long, which exceeds the maximum of 120 characters. (lll)
+	RemoveTenantMember(ctx context.Context, orgID string, memberTenantID uint64, operatorUserID string, operatorTenantID uint64) error
+^
+internal/types/interfaces/organization.go:30:1: The line is 164 characters long, which exceeds the maximum of 120 characters. (lll)
+	UpdateTenantMemberRole(ctx context.Context, orgID string, memberTenantID uint64, role types.OrgMemberRole, operatorUserID string, operatorTenantID uint64) error
+^
+internal/types/interfaces/organization.go:36:1: The line is 121 characters long, which exceeds the maximum of 120 characters. (lll)
+	JoinByInviteCode(ctx context.Context, inviteCode string, userID string, tenantID uint64) (*types.Organization, error)
+^
+internal/types/interfaces/organization.go:38:1: The line is 148 characters long, which exceeds the maximum of 120 characters. (lll)
+	SearchSearchableOrganizations(ctx context.Context, tenantID uint64, query string, limit int) (*types.ListSearchableOrganizationsResponse, error)
+^
+internal/types/interfaces/organization.go:39:1: The line is 171 characters long, which exceeds the maximum of 120 characters. (lll)
+	JoinByOrganizationID(ctx context.Context, orgID string, userID string, tenantID uint64, message string, requestedRole types.OrgMemberRole) (*types.Organization, error)
+^
+internal/types/interfaces/organization.go:42:1: The line is 179 characters long, which exceeds the maximum of 120 characters. (lll)
+	SubmitJoinRequest(ctx context.Context, orgID string, userID string, tenantID uint64, message string, requestedRole types.OrgMemberRole) (*types.OrganizationJoinRequest, error)
+^
+internal/types/interfaces/organization.go:45:1: The line is 188 characters long, which exceeds the maximum of 120 characters. (lll)
+	ReviewJoinRequest(ctx context.Context, orgID string, requestID string, approved bool, reviewerID string, reviewerTenantID uint64, message string, assignRole *types.OrgMemberRole) error
+^
+cmd/download/duckdb/duckdb.go:1:1: package-comments: should have a package comment (revive)
+package main
+^
+docreader/client/auth.go:126:40: unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ (revive)
+func (t *tokenAuth) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+                                       ^
+docreader/client/client.go:24:5: exported: exported var Logger should have comment or be unexported (revive)
+var Logger = log.New(os.Stdout, "[DocReader] ", log.LstdFlags|log.Lmicroseconds)
+    ^
+docreader/client/client.go:41:1: exported: exported function NewClient should have comment or be unexported (revive)
+func NewClient(addr string) (*Client, error) {
+^
+docreader/client/client.go:46:1: exported: exported function NewClientWithAuth should have comment or be unexported (revive)
+func NewClientWithAuth(addr string, authConfig *AuthConfig) (*Client, error) {
+^
+internal/application/service/metric/bleu.go:27:6: exported: exported type BLEUMetric should have comment or be unexported (revive)
+type BLEUMetric struct {
+     ^
+internal/application/service/metric/bleu.go:32:1: exported: exported function NewBLEUMetric should have comment or be unexported (revive)
+func NewBLEUMetric(smoothing bool, weights BLEUWeight) *BLEUMetric {
+^
+internal/application/service/metric/bleu.go:36:6: exported: exported type Sentence should have comment or be unexported (revive)
+type Sentence []string
+     ^
+internal/application/service/metric/bleu.go:38:6: exported: exported type BLEUWeight should have comment or be unexported (revive)
+type BLEUWeight []float64
+     ^
+internal/application/service/metric/bleu.go:41:2: exported: exported var BLEU1Gram should have comment or be unexported (revive)
+	BLEU1Gram BLEUWeight = []float64{1.0, 0.0, 0.0, 0.0}
+	^
+internal/application/service/metric/bleu.go:47:1: exported: exported method BLEUMetric.Compute should have comment or be unexported (revive)
+func (b *BLEUMetric) Compute(metricInput *types.MetricInput) float64 {
+^
+internal/application/service/metric/common.go:18:1: redefines-builtin-id: redefinition of the built-in function min (revive)
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+internal/application/service/metric/common.go:101:1: exported: exported function ToSet should have comment or be unexported (revive)
+func ToSet[T comparable](li []T) map[T]struct{} {
+^
+internal/application/service/metric/common.go:109:1: exported: exported function SliceMap should have comment or be unexported (revive)
+func SliceMap[T any, Y any](li []T, fn func(T) Y) []Y {
+^
+internal/application/service/metric/common.go:117:1: exported: exported function Hit should have comment or be unexported (revive)
+func Hit[T comparable](li []T, set map[T]struct{}) int {
+^
+internal/application/service/metric/common.go:127:1: exported: exported function Fold should have comment or be unexported (revive)
+func Fold[T any, Y any](slice []T, initial Y, f func(Y, T) Y) Y {
+^
+internal/application/service/metric/rouge_score.go:36:6: exported: exported type Ngrams should have comment or be unexported (revive)
+type Ngrams struct {
+     ^
+internal/application/service/metric/rouge_score.go:41:1: exported: exported function NewNgrams should have comment or be unexported (revive)
+func NewNgrams(exclusive bool) *Ngrams {
+^
+internal/application/service/metric/rouge_score.go:45:1: exported: exported method Ngrams.Add should have comment or be unexported (revive)
+func (n *Ngrams) Add(o string) {
+^
+internal/application/service/metric/rouge_score.go:53:1: exported: exported method Ngrams.Len should have comment or be unexported (revive)
+func (n *Ngrams) Len() int {
+^
+internal/application/service/metric/rouge_score.go:57:1: exported: exported method Ngrams.Intersection should have comment or be unexported (revive)
+func (n *Ngrams) Intersection(o *Ngrams) *Ngrams {
+^
+internal/application/service/metric/rouge_score.go:67:1: exported: exported method Ngrams.BatchAdd should have comment or be unexported (revive)
+func (n *Ngrams) BatchAdd(o []string) {
+^
+internal/application/service/metric/rouge_score.go:73:1: exported: exported method Ngrams.Union should have comment or be unexported (revive)
+func (n *Ngrams) Union(others ...*Ngrams) *Ngrams {
+^
+internal/application/service/metric/rouge_score.go:129:10: indent-error-flow: if block ends with a return statement, so drop this else and outdent its block (revive)
+		} else {
+			return reconFunc(i, j-1)
+		}
+internal/application/service/metric/rouge_score.go:157:9: indent-error-flow: if block ends with a return statement, so drop this else and outdent its block (revive)
+	} else {
+		return calculateRougeN(evaluatedCount, referenceCount, overlappingCount)
+	}
+internal/application/service/metric/rouge_score.go:244:9: indent-error-flow: if block ends with a return statement, so drop this else and outdent its block (revive)
+	} else {
+		results["f"] = fLcs
+		results["p"] = pLcs
+		results["r"] = rLcs
+		return results
+	}
+internal/assets/embed.go:1:1: package-comments: should have a package comment (revive)
+package assets
+^
+internal/assets/embed.go:6:5: exported: exported var ASRTestWAV should have comment or be unexported (revive)
+var ASRTestWAV []byte
+    ^
+internal/config/config.go:89:6: exported: exported type VectorDatabaseConfig should have comment or be unexported (revive)
+type VectorDatabaseConfig struct {
+     ^
+internal/config/config.go:311:6: exported: exported type OIDCUserInfoMapping should have comment or be unexported (revive)
+type OIDCUserInfoMapping struct {
+     ^
+internal/config/config.go:316:6: exported: exported type OIDCAuthConfig should have comment or be unexported (revive)
+type OIDCAuthConfig struct {
+     ^
+internal/config/config.go:477:6: exported: exported type FebriText should have comment or be unexported (revive)
+type FebriText struct {
+     ^
+internal/config/config.go:490:6: exported: func name will be used as config.ConfigDir by other packages, and that stutters; consider calling this Dir (revive)
+func ConfigDir() string {
+     ^
+internal/errors/errors.go:177:1: exported: comment on exported function NewTenantNotFoundError should be of the form "NewTenantNotFoundError ..." (revive)
+// Tenant related errors
+^
+internal/errors/errors.go:214:1: exported: comment on exported function NewAgentMissingThinkingModelError should be of the form "NewAgentMissingThinkingModelError ..." (revive)
+// Agent related errors
+^
+internal/errors/errors.go:223:1: exported: exported function NewAgentMissingAllowedToolsError should have comment or be unexported (revive)
+func NewAgentMissingAllowedToolsError() *AppError {
+^
+internal/errors/errors.go:231:1: exported: exported function NewAgentInvalidMaxIterationsError should have comment or be unexported (revive)
+func NewAgentInvalidMaxIterationsError() *AppError {
+^
+internal/errors/errors.go:239:1: exported: exported function NewAgentInvalidTemperatureError should have comment or be unexported (revive)
+func NewAgentInvalidTemperatureError() *AppError {
+^
+internal/errors/parse_error_codes.go:1:1: package-comments: package comment should be of the form "Package errors ..." (revive)
+// Package errors: parse stage error codes.
+//
+// These constants are the stable wire format the frontend uses to map a
+// failure to a localized "what to do about it" message. Adding a new code
+// is non-breaking; renaming an existing one requires a coordinated
+// frontend release because the i18n keys are looked up by code.
+//
+// Codes are SCREAMING_SNAKE so they survive JSON case transforms and look
+// distinct from Go identifiers in logs/dashboards.
+internal/logger/logger.go:68:6: exported: exported type CustomFormatter should have comment or be unexported (revive)
+type CustomFormatter struct {
+     ^
+internal/logger/logger.go:94:1: exported: exported method CustomFormatter.Format should have comment or be unexported (revive)
+func (f *CustomFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+^
+internal/models/utils/slices.go:1:1: package-comments: should have a package comment (revive)
+package utils
+^
+internal/ratelimit/limiter.go:66:58: redefines-builtin-id: redefinition of the built-in function max (revive)
+func (l *Limiter) Allow(ctx context.Context, key string, max int) bool {
+                                                         ^
+internal/ratelimit/limiter.go:79:63: redefines-builtin-id: redefinition of the built-in function max (revive)
+func (l *Limiter) redisAllow(ctx context.Context, key string, max int) (bool, error) {
+                                                              ^
+internal/ratelimit/limiter_test.go:12:2: redefines-builtin-id: redefinition of the built-in function max (revive)
+	const max = 3
+	^
+internal/storageallowlist/allowlist.go:8:7: exported: exported const AllowListEnv should have comment or be unexported (revive)
+const AllowListEnv = "STORAGE_ALLOW_LIST"
+      ^
+internal/utils/inject.go:2217:24: var-naming: method validateJsonValueExpr should be validateJSONValueExpr (revive)
+func (v *sqlValidator) validateJsonValueExpr(jve *pg_query.JsonValueExpr, result *SQLValidationResult) error {
+                       ^
+internal/utils/inject.go:2229:24: var-naming: method validateJsonBehavior should be validateJSONBehavior (revive)
+func (v *sqlValidator) validateJsonBehavior(jb *pg_query.JsonBehavior, result *SQLValidationResult) error {
+                       ^
+internal/utils/security.go:771:1: exported: exported method SSRFValidatingRoundTripper.RoundTrip should have comment or be unexported (revive)
+func (t *SSRFValidatingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+^
+internal/utils/security.go:1255:9: var-naming: range var proxyUrl should be proxyURL (revive)
+	for _, proxyUrl := range []string{
+	       ^
+docreader/client/client.go:64:15: SA1019: google.golang.org/grpc.Dial is deprecated: use NewClient instead.  Will be supported throughout 1.x. (staticcheck)
+	conn, err := grpc.Dial("dns:///"+addr, opts...)
+	             ^
+internal/agent/tools/data_schema.go:114:3: QF1003: could use tagged switch on chunk.ChunkType (staticcheck)
+		if chunk.ChunkType == types.ChunkTypeTableSummary {
+		^
+internal/application/repository/chunk_revision_test.go:61:19: SA1032: arguments have the wrong order (staticcheck)
+	require.False(t, errors.Is(gorm.ErrRecordNotFound, ErrChunkRevisionConflict))
+	                 ^
+internal/application/repository/retriever/opensearch/repository_test.go:898:23: SA1012: do not pass a nil Context, even if a function permits it; pass context.TODO if you are unsure about which Context to use (staticcheck)
+	err := r.ensureReady(nil, 768) //nolint:staticcheck — explicit nil ctx test
+	                     ^
+internal/application/service/agent_share.go:243:2: SA4009(related information): assignment to permission (staticcheck)
+	permission = types.OrgRoleViewer
+	^
+internal/application/service/datasource_service.go:1202:2: QF1003: could use tagged switch on status (staticcheck)
+	if status == types.SyncLogStatusFailed {
+	^
+internal/application/service/knowledge_process.go:3952:13: ST1023: should omit type interfaces.DocReader from declaration; it will be inferred from the right-hand side (staticcheck)
+	var reader interfaces.DocReader = s.resolveDocReader(ctx, parserEngine, fileType, isURL, mergedOverrides)
+	           ^
+internal/application/service/knowledge_storage_config_test.go:138:12: SA1019: github.com/Tencent/WeKnora/internal/types.StorageConfig is deprecated: StorageConfig is the legacy COS configuration stored in the cos_config column. New code should use StorageProviderConfig. Kept for backward compatibility with old data. (staticcheck)
+	legacy := types.StorageConfig{
+	          ^
+internal/application/service/knowledge_storage_config_test.go:167:5: SA1019: (github.com/Tencent/WeKnora/internal/types.KnowledgeBase).StorageConfig is deprecated: legacy COS config column. Kept for backward compatibility with old data. (staticcheck)
+				StorageConfig:         legacy,
+				^
+internal/application/service/knowledge_util.go:195:9: SA1019: (github.com/Tencent/WeKnora/internal/types.KnowledgeBase).StorageConfig is deprecated: legacy COS config column. Kept for backward compatibility with old data. (staticcheck)
+	sc := &kb.StorageConfig
+	       ^
+internal/application/service/knowledgebase.go:1246:4: SA1019: (github.com/Tencent/WeKnora/internal/types.KnowledgeBase).StorageConfig is deprecated: legacy COS config column. Kept for backward compatibility with old data. (staticcheck)
+			StorageConfig:         sourceKB.StorageConfig,
+			^
+internal/application/service/memory/extract.go:134:46: S1012: should use time.Since instead of time.Now().Sub (staticcheck)
+		if remaining := cfg.ExtractMinInterval() - time.Now().Sub(*previous.LastExtractedAt); remaining > delay {
+		                                           ^
+internal/application/service/message.go:925:3: QF1003: could use tagged switch on item.Role (staticcheck)
+		if item.Role == "user" {
+		^
+internal/application/service/retriever/normalizer_test.go:232:3: SA1012: do not pass a nil Context, even if a function permits it; pass context.TODO if you are unsure about which Context to use (staticcheck)
+		nil, 1.0, types.VectorRetrieverType,
+		^
+internal/application/service/retriever/normalizer_test.go:264:3: SA1012: do not pass a nil Context, even if a function permits it; pass context.TODO if you are unsure about which Context to use (staticcheck)
+		nil, 0.5, types.VectorRetrieverType,
+		^
+internal/application/service/session.go:662:2: S1031: unnecessary nil check around range (staticcheck)
+	if sessions != nil {
+	^
+internal/application/service/session_sandbox_entry_test.go:74:11: S1040: type assertion to the same type: got already has type SandboxArtifactSource (staticcheck)
+	_, ok := got.(SandboxArtifactSource)
+	         ^
+internal/application/service/web_search.go:130:5: SA1019: (github.com/Tencent/WeKnora/internal/types.WebSearchConfig).Provider is deprecated: Use WebSearchProviderEntity.Parameters.APIKey instead. (staticcheck)
+	if cfg.Provider != "" {
+	   ^
+internal/application/service/web_search.go:133:12: SA1019: (github.com/Tencent/WeKnora/internal/types.WebSearchConfig).APIKey is deprecated: Use WebSearchProviderEntity.Parameters.APIKey instead. (staticcheck)
+			APIKey: cfg.APIKey,
+			        ^
+internal/application/service/web_search.go:135:46: SA1019: (github.com/Tencent/WeKnora/internal/types.WebSearchConfig).Provider is deprecated: Use WebSearchProviderEntity.Parameters.APIKey instead. (staticcheck)
+		provider, err := s.registry.CreateProvider(cfg.Provider, params)
+		                                           ^
+internal/application/service/web_search.go:137:74: SA1019: (github.com/Tencent/WeKnora/internal/types.WebSearchConfig).Provider is deprecated: Use WebSearchProviderEntity.Parameters.APIKey instead. (staticcheck)
+			return nil, fmt.Errorf("web search provider %s is not available: %w", cfg.Provider, err)
+			                                                                      ^
+internal/application/service/wiki_ingest.go:3262:4: QF1003: could use tagged switch on r (staticcheck)
+			if r == '\n' {
+			^
+internal/application/service/wiki_ingest_batch.go:677:5: QF1003: could use tagged switch on affectedType (staticcheck)
+				if affectedType == "ingest" {
+				^
+internal/application/service/wiki_ingest_batch.go:1834:3: QF1003: could use tagged switch on u.Type (staticcheck)
+		if u.Type == "summary" {
+		^
+internal/application/service/wiki_linkify.go:228:2: S1011: should replace loop with spans = append(spans, scanReferenceDefinitions(s)...) (staticcheck)
+	for _, sp := range scanReferenceDefinitions(s) {
+	^
+internal/container/container.go:1366:35: SA1019: google.golang.org/grpc.WithTimeout is deprecated: this DialOption is not supported by NewClient. Will be supported throughout 1.x. (staticcheck)
+			DialOptions: []grpc.DialOption{grpc.WithTimeout(5 * time.Second)},
+			                               ^
+internal/container/engine_factory.go:259:4: SA1019: google.golang.org/grpc.WithTimeout is deprecated: this DialOption is not supported by NewClient. Will be supported throughout 1.x. (staticcheck)
+			grpc.WithTimeout(5 * time.Second),
+			^
+internal/handler/dto/tenant_test.go:44:18: SA1019: (github.com/Tencent/WeKnora/internal/types.WebSearchConfig).APIKey is deprecated: Use WebSearchProviderEntity.Parameters.APIKey instead. (staticcheck)
+	assert.Empty(t, resp.WebSearchConfig.APIKey)
+	                ^
+internal/handler/initialization.go:1421:3: SA1019: (github.com/ollama/ollama/api.PullRequest).Name is deprecated: set the model name with Model instead (staticcheck)
+		Name: modelName,
+		^
+internal/handler/knowledge.go:24:2: ST1019: package "github.com/Tencent/WeKnora/internal/utils" is being imported more than once (staticcheck)
+	"github.com/Tencent/WeKnora/internal/utils"
+	^
+internal/handler/knowledge.go:25:2: ST1019(related information): other import of "github.com/Tencent/WeKnora/internal/utils" (staticcheck)
+	secutils "github.com/Tencent/WeKnora/internal/utils"
+	^
+internal/handler/knowledge.go:613:2: SA4006: this value of knowledge is never used (staticcheck)
+	knowledge, effCtx, err := h.resolveKnowledgeAndValidateKBAccess(c, id, types.OrgRoleViewer)
+	^
+internal/handler/knowledgebase.go:15:2: ST1019: package "github.com/Tencent/WeKnora/internal/errors" is being imported more than once (staticcheck)
+	"github.com/Tencent/WeKnora/internal/errors"
+	^
+internal/handler/knowledgebase.go:16:2: ST1019(related information): other import of "github.com/Tencent/WeKnora/internal/errors" (staticcheck)
+	apperrors "github.com/Tencent/WeKnora/internal/errors"
+	^
+internal/handler/knowledgebase.go:23:2: ST1019: package "github.com/Tencent/WeKnora/internal/utils" is being imported more than once (staticcheck)
+	"github.com/Tencent/WeKnora/internal/utils"
+	^
+internal/handler/knowledgebase.go:24:2: ST1019(related information): other import of "github.com/Tencent/WeKnora/internal/utils" (staticcheck)
+	secutils "github.com/Tencent/WeKnora/internal/utils"
+	^
+internal/handler/tenant_secret_disclosure_test.go:138:4: SA1019: (github.com/Tencent/WeKnora/internal/types.WebSearchConfig).APIKey is deprecated: Use WebSearchProviderEntity.Parameters.APIKey instead. (staticcheck)
+			APIKey: "legacy-search-secret-999",
+			^
+internal/im/slack/factory.go:43:36: SA4023: this comparison is always true (staticcheck)
+				if err := client.Start(wsCtx); err != nil && wsCtx.Err() == nil {
+				                               ^
+internal/infrastructure/chunker/splitter.go:130:21: S1007: should use raw string (`...`) with regexp.MustCompile to avoid having to escape twice (staticcheck)
+	regexp.MustCompile("(?m)[ ]*(?:\\|[^|\\n]*)+\\|[\\r\\n]+"),                                          // Table rows
+	                   ^
+internal/infrastructure/chunker/splitter.go:203:28: S1016: should convert m (type match) to span instead of using struct literal (staticcheck)
+			result = append(result, span{m.start, m.end})
+			                        ^
+internal/infrastructure/docparser/grpc_parser.go:68:15: SA1019: google.golang.org/grpc.Dial is deprecated: use NewClient instead.  Will be supported throughout 1.x. (staticcheck)
+	conn, err := grpc.Dial("dns:///"+addr, opts...)
+	             ^
+internal/modelcontext/model_output.go:750:2: SA4020: unreachable case clause: fmt.Stringer will always match before encoding/json.Number (staticcheck)
+	case json.Number:
+	^
+internal/models/api/json_field_extractor.go:121:3: QF1003: could use tagged switch on ch (staticcheck)
+		if ch == '\\' {
+		^
+internal/models/utils/ollama/ollama.go:162:3: SA1019: (github.com/ollama/ollama/api.PullRequest).Name is deprecated: set the model name with Model instead (staticcheck)
+		Name: modelName,
+		^
+internal/models/utils/ollama/ollama.go:251:3: SA1019: (github.com/ollama/ollama/api.ShowRequest).Name is deprecated: set the model name with Model instead (staticcheck)
+		Name: modelName,
+		^
+internal/models/utils/ollama/ollama.go:313:3: SA1019: (github.com/ollama/ollama/api.DeleteRequest).Name is deprecated: set the model name with Model instead (staticcheck)
+		Name: modelName,
+		^
+internal/models/vlm/ollama.go:66:14: ST1005: error strings should not be capitalized (staticcheck)
+		return "", fmt.Errorf("Ollama VLM request: %w", err)
+		           ^
+internal/sandbox/mkdir.go:26:3: QF1003: could use tagged switch on current (staticcheck)
+		if current == "/" {
+		^
+internal/types/faq.go:593:22: SA1024: cutset contains duplicate characters (staticcheck)
+	q = strings.Trim(q, `？。，；、：""！?.,;!:'""`)
+	                    ^
+internal/types/memory.go:176:9: QF1001: could apply De Morgan's law (staticcheck)
+	return !(ok && disabled)
+	       ^
+internal/application/service/chat_pipeline/query_understand.go:26:5: var rewriteImageSepPattern is unused (unused)
+var rewriteImageSepPattern = regexp.MustCompile(`(?s)^(.*?)\s*\n?---\n(.*)$`)
+    ^
+internal/application/service/knowledge.go:387:28: func (*knowledgeService).isKnowledgeDeleting is unused (unused)
+func (s *knowledgeService) isKnowledgeDeleting(ctx context.Context, tenantID uint64, knowledgeID string) bool {
+                           ^
+internal/application/service/knowledge_faq_import.go:1788:28: func (*knowledgeService).clearRunningFAQImportTaskID is unused (unused)
+func (s *knowledgeService) clearRunningFAQImportTaskID(ctx context.Context, kbID string) error {
+                           ^
+internal/application/service/knowledge_util.go:134:28: func (*knowledgeService).getVLMConfig is unused (unused)
+func (s *knowledgeService) getVLMConfig(ctx context.Context, kb *types.KnowledgeBase) (*types.DocParserVLMConfig, error) {
+                           ^
+internal/application/service/memory/topic_resolve.go:30:2: const topicMaxAliases is unused (unused)
+	topicMaxAliases = 12
+	^
+internal/application/service/user_env_test.go:405:6: func userEnvByName is unused (unused)
+func userEnvByName(t *testing.T, rows []*types.TenantUserEnvVar, name string) *types.TenantUserEnvVar {
+     ^
+internal/application/service/wiki_ingest_cite.go:56:6: type citationPipelineOutcome is unused (unused)
+type citationPipelineOutcome struct {
+     ^
+internal/im/telegram/adapter.go:234:19: func (*Adapter).sendMessage is unused (unused)
+func (a *Adapter) sendMessage(ctx context.Context, chatID, text, replyToMessageID string) error {
+                  ^
+internal/infrastructure/web_search/bing.go:29:6: type bingSafeSearch is unused (unused)
+type bingSafeSearch string
+     ^
+internal/infrastructure/web_search/bing.go:32:2: const bingSafeSearchOff is unused (unused)
+	bingSafeSearchOff      bingSafeSearch = "Off"
+	^
+internal/infrastructure/web_search/bing.go:33:2: const bingSafeSearchModerate is unused (unused)
+	bingSafeSearchModerate bingSafeSearch = "Moderate"
+	^
+internal/infrastructure/web_search/bing.go:34:2: const bingSafeSearchStrict is unused (unused)
+	bingSafeSearchStrict   bingSafeSearch = "Strict"
+	^
+internal/infrastructure/web_search/bing.go:37:6: type bingFreshness is unused (unused)
+type bingFreshness string
+     ^
+internal/infrastructure/web_search/bing.go:40:2: const bingFreshnessDay is unused (unused)
+	bingFreshnessDay   = "Day"
+	^
+internal/infrastructure/web_search/bing.go:41:2: const bingFreshnessWeek is unused (unused)
+	bingFreshnessWeek  = "Week"
+	^
+internal/infrastructure/web_search/bing.go:42:2: const bingFreshnessMonth is unused (unused)
+	bingFreshnessMonth = "Month"
+	^
+234 issues:
+* errcheck: 50
+* gofmt: 1
+* gofumpt: 2
+* govet: 2
+* ineffassign: 13
+* lll: 50
+* revive: 50
+* staticcheck: 50
+* unused: 16
+make: *** [Makefile:263: lint] Error 1
+LINT_EXIT=2

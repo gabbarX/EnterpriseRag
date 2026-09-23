@@ -1,0 +1,258 @@
+import assert from 'node:assert/strict'
+import test from 'node:test'
+import { renderArtifactFileIcon } from './artifactFileIcon'
+
+import {
+  isArtifactRefHref,
+  normalizeSandboxArtifactRefs,
+  renderArtifactReference,
+  resolveArtifactRef,
+  type ArtifactRefMeta,
+} from './sandboxArtifactRefs.ts'
+
+const labels = { previewHint: 'Click to preview', missingHint: 'File unavailable', deletedHint: 'File deleted' }
+
+test('inline file cards reuse the drawer icon and keep filenames escaped', () => {
+  for (const name of ['report.pdf', 'table.xlsx', 'notes.docx', 'slides.pptx', 'chart.html', 'bad.<img src=x onerror=alert(1)>']) {
+    const icon = renderArtifactFileIcon(name)
+    const html = renderArtifactReference({ href: 'sandbox:' + name, artifacts: [{ index: 3, file_name: name }], labels })
+    assert.ok(html?.includes(icon))
+    assert.ok(html?.includes('data-artifact-index="3"'))
+    assert.doesNotMatch(icon, /<img|onerror/)
+    assert.doesNotMatch(html!, /<img src=x/)
+  }
+  assert.match(renderArtifactFileIcon('report.pdf'), /kind-file-pdf/)
+  assert.match(renderArtifactFileIcon('report.pdf'), />PDF<\/text>/)
+})
+
+// A 22-character handle, matching the backend's types.ResourceHandleLength.
+const handleFor = (i: number) => `art${i}`.padEnd(22, 'x')
+const refFor = (i: number) => `resource://${handleFor(i)}`
+
+const artifacts: ArtifactRefMeta[] = [
+  { index: 0, handle: refFor(0), file_name: 'बाजार-स्कोर_e7edba.html', file_type: 'text/html' },
+  { index: 1, handle: refFor(1), file_name: 'trend.png', file_type: 'image/png' },
+  { index: 2, handle: refFor(2), file_name: 'diagram.svg', file_type: 'image/svg+xml' },
+  { index: 3, handle: refFor(3), file_name: 'Infosys (INFY) volume_838ccc.html', file_type: 'text/html' },
+]
+
+// A knowledge-base retrieval image: identical in shape to an artifact, but it does not belong to this message.
+const foreignRef = `resource://${'z'.repeat(22)}`
+
+test('isArtifactRefHref matches handle and sandbox forms only', () => {
+  assert.equal(isArtifactRefHref(refFor(0)), true)
+  assert.equal(isArtifactRefHref('sandbox:trend.png'), true)
+  assert.equal(isArtifactRefHref('sandbox://trend.png'), true)
+  assert.equal(isArtifactRefHref('https://example.com/trend.png'), false)
+  // The wrong length is not a handle.
+  assert.equal(isArtifactRefHref('resource://tenant/1/trend.png'), false)
+  assert.equal(isArtifactRefHref('trend.png'), false)
+  assert.equal(isArtifactRefHref(''), false)
+})
+
+test('resolveArtifactRef resolves both the handle and the name form', () => {
+  assert.equal(resolveArtifactRef(refFor(1), artifacts)?.file_name, 'trend.png')
+  assert.equal(resolveArtifactRef('sandbox:trend.png', artifacts)?.index, 1)
+  assert.equal(
+    resolveArtifactRef('sandbox:/workspace/output/trend.png', artifacts)?.index,
+    1,
+  )
+  assert.equal(
+    resolveArtifactRef('sandbox:%E0%A4%AC%E0%A4%BE%E0%A4%9C%E0%A4%BE%E0%A4%B0-%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A5%8B%E0%A4%B0_e7edba.html', artifacts)?.index,
+    0,
+  )
+  assert.equal(resolveArtifactRef(foreignRef, artifacts), null)
+  assert.equal(resolveArtifactRef('sandbox:missing.csv', artifacts), null)
+})
+
+test('resolveArtifactRef accepts the url field carried by persisted messages', () => {
+  const persisted: ArtifactRefMeta[] = [{ index: 0, url: refFor(7), file_name: 'a.csv' }]
+  assert.equal(resolveArtifactRef(refFor(7), persisted)?.file_name, 'a.csv')
+})
+
+test('renderArtifactReference leaves ordinary images to the default renderer', () => {
+  assert.equal(
+    renderArtifactReference({ href: 'https://example.com/a.png', artifacts, labels }),
+    null,
+  )
+  assert.equal(
+    renderArtifactReference({ href: 'resource://tenant/1/a.png', artifacts, labels }),
+    null,
+  )
+})
+
+test('a handle from outside this message falls back to protected-image rendering', () => {
+  // A retrieval image looks just like an artifact. It must fall back to the default renderer rather than claim "File unavailable".
+  assert.equal(
+    renderArtifactReference({ href: foreignRef, artifacts, labels }),
+    null,
+  )
+  assert.equal(
+    renderArtifactReference({ href: foreignRef, artifacts: [], labels, streaming: true }),
+    null,
+  )
+})
+
+test('renderArtifactReference renders image artifacts inline', () => {
+  const html = renderArtifactReference({
+    href: refFor(1),
+    alt: 'Trend',
+    artifacts,
+    labels,
+  })
+  assert.ok(html?.includes('class="markdown-image artifact-ref-image"'))
+  assert.ok(html?.includes('data-artifact-index="1"'))
+  assert.ok(html?.includes('data-img-loading="1"'))
+  assert.ok(html?.includes('alt="Trend"'))
+})
+
+test('renderArtifactReference renders non-image artifacts as a clickable card', () => {
+  const html = renderArtifactReference({
+    href: refFor(0),
+    alt: 'Market scorecard',
+    artifacts,
+    labels,
+  })
+  assert.ok(html?.includes('class="artifact-ref-card"'))
+  assert.ok(html?.includes('data-artifact-index="0"'))
+  assert.ok(html?.includes('role="button"'))
+  assert.ok(html?.includes('बाजार-स्कोर_e7edba.html'))
+  assert.ok(html?.includes('Click to preview'))
+  assert.ok(!html?.includes('<img'))
+})
+
+test('svg artifacts go through the sandboxed preview rather than inline rendering', () => {
+  const html = renderArtifactReference({ href: refFor(2), artifacts, labels })
+  assert.ok(html?.includes('artifact-ref-card'))
+  assert.ok(!html?.includes('artifact-ref-image'))
+})
+
+test('while streaming an unresolved reference shows the image skeleton', () => {
+  // Artifacts are only collected once the turn ends, so mid-stream every
+  // reference is unresolved; a card there would flash a half-written name.
+  const html = renderArtifactReference({
+    href: 'sandbox:बाजार-स्कोर_e7edba.html',
+    artifacts: [],
+    labels,
+    streaming: true,
+  })
+  assert.ok(html?.includes('streaming-image-loading'))
+  assert.ok(!html?.includes('artifact-ref-card'))
+})
+
+test('after the turn ends an unresolved reference says so instead of hanging', () => {
+  const html = renderArtifactReference({
+    href: 'sandbox:बाजार-स्कोर_e7edba.html',
+    alt: 'Market scorecard',
+    artifacts: [],
+    labels,
+  })
+  assert.ok(html?.includes('artifact-ref-card--pending'))
+  assert.ok(html?.includes('File unavailable'))
+  assert.ok(!html?.includes('data-artifact-index'))
+  assert.ok(!html?.includes('role="button"'))
+})
+
+test('an empty image destination is skipped instead of rendering a broken img', () => {
+  const html = renderArtifactReference({
+    href: '',
+    alt: 'Sample file',
+    artifacts: [],
+    labels,
+  })
+  assert.equal(html, '')
+})
+
+test('file names with spaces and parentheses resolve end to end', () => {
+  const raw = '![Volume](sandbox:Infosys (INFY) volume_838ccc.html)'
+  const normalized = normalizeSandboxArtifactRefs(raw)
+
+  // marked would split the raw destination at the first space; after
+  // normalization it is a single token.
+  const href = normalized.slice(normalized.indexOf('](') + 2, normalized.lastIndexOf(')'))
+  assert.ok(!href.includes(' '))
+  assert.equal(resolveArtifactRef(href, artifacts)?.index, 3)
+
+  const html = renderArtifactReference({ href, alt: 'Volume', artifacts, labels })
+  assert.ok(html?.includes('Infosys (INFY) volume_838ccc.html'))
+  assert.ok(html?.includes('data-artifact-index="3"'))
+})
+
+test('normalizeSandboxArtifactRefs leaves everything else alone', () => {
+  const untouched = [
+    '![Remote](https://example.com/a(b).png)',
+    '![Resource](resource://tenant/1/a.png)',
+    'Infosys (INFY) volumes are shown below.',
+    'Write it as `![Chart](sandbox:a b.html)`',
+    '```\n![Chart](sandbox:a b.html)\n```',
+  ]
+  for (const markdown of untouched) {
+    assert.equal(normalizeSandboxArtifactRefs(markdown), markdown)
+  }
+})
+
+test('normalizeSandboxArtifactRefs preserves a title and an unterminated tail', () => {
+  assert.equal(
+    normalizeSandboxArtifactRefs('![Chart](sandbox:a b.html "Caption")'),
+    '![Chart](sandbox:a%20b.html "Caption")',
+  )
+  // Mid-stream the closing paren has not arrived yet; leave the tail for the
+  // streaming placeholder guard rather than guessing where it ends.
+  assert.equal(
+    normalizeSandboxArtifactRefs('![Chart](sandbox:Infosys (INFY'),
+    '![Chart](sandbox:Infosys (INFY',
+  )
+})
+
+test('artifact names are HTML-escaped', () => {
+  const html = renderArtifactReference({
+    href: refFor(0),
+    artifacts: [{ index: 0, handle: refFor(0), file_name: '<img src=x onerror=alert(1)>.csv' }],
+    labels,
+  })
+  assert.ok(!html?.includes('<img src=x'))
+  assert.ok(html?.includes('&lt;img'))
+})
+
+test('a deleted artifact renders as a greyed, non-clickable card', () => {
+  const html = renderArtifactReference({
+    href: refFor(0),
+    alt: 'Market scorecard',
+    artifacts: artifacts.map((a, i) =>
+      i === 0 ? { ...a, deleted_at: '2026-09-20T02:00:00Z' } : a,
+    ),
+    labels,
+  })
+  assert.ok(html?.includes('artifact-ref-card--deleted'))
+  assert.ok(html?.includes('File deleted'))
+  assert.ok(html?.includes('बाजार-स्कोर_e7edba.html'), 'the name still says which file it was')
+  // Not clickable: the bytes are gone, so opening the preview would 404.
+  assert.ok(!html?.includes('data-artifact-index'))
+  assert.ok(!html?.includes('role="button"'))
+  // And distinguishable from a reference that never resolved at all.
+  assert.ok(!html?.includes('artifact-ref-card--pending'))
+})
+
+test('a deleted image artifact degrades to the card instead of a broken img', () => {
+  // renderImage would emit a placeholder that hydrateArtifactImages then fails
+  // to fill, leaving a permanently blank image in the answer.
+  const html = renderArtifactReference({
+    href: refFor(1),
+    alt: 'Trend',
+    artifacts: artifacts.map((a, i) =>
+      i === 1 ? { ...a, deleted_at: '2026-09-20T02:00:00Z' } : a,
+    ),
+    labels,
+  })
+  assert.ok(html?.includes('artifact-ref-card--deleted'))
+  assert.ok(!html?.includes('artifact-ref-image'))
+  assert.ok(!html?.includes('<img'))
+})
+
+test('a deleted artifact is not mistaken for a foreign handle', () => {
+  // Dropping tombstones before rendering would make the handle unresolvable,
+  // and an unresolved handle falls through to protected-image rendering — a
+  // broken image rather than an honest "deleted" card.
+  const live = artifacts.filter((_, i) => i !== 0)
+  assert.equal(renderArtifactReference({ href: refFor(0), artifacts: live, labels }), null)
+})

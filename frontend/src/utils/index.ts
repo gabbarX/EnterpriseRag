@@ -1,0 +1,83 @@
+import { MessagePlugin } from "tdesign-vue-next";
+import { shouldRejectKnowledgeFileType } from "./fileTypeVerification";
+
+declare global {
+  interface Window {
+    __RUNTIME_CONFIG__?: {
+      MAX_FILE_SIZE_MB?: number;
+      MAX_SKILL_BUNDLE_SIZE_MB?: number;
+    };
+  }
+}
+
+function positiveMegabytes(value: unknown, fallback: number): number {
+  const n = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(n) && n > 0 ? n : fallback
+}
+
+export const MAX_FILE_SIZE_MB = positiveMegabytes(
+  window.__RUNTIME_CONFIG__?.MAX_FILE_SIZE_MB ?? import.meta.env.VITE_MAX_FILE_SIZE_MB,
+  50,
+)
+export const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+
+// Skill zips are larger than knowledge files (GitHub zipballs, ppt-master).
+// Never below the knowledge cap; ceiling matches the Go uncompressed archive cap.
+export const MAX_SKILL_BUNDLE_SIZE_MB = Math.min(
+  512,
+  Math.max(
+    positiveMegabytes(
+      window.__RUNTIME_CONFIG__?.MAX_SKILL_BUNDLE_SIZE_MB
+        ?? import.meta.env.VITE_MAX_SKILL_BUNDLE_SIZE_MB,
+      256,
+    ),
+    MAX_FILE_SIZE_MB,
+  ),
+)
+export const MAX_SKILL_BUNDLE_SIZE_BYTES = MAX_SKILL_BUNDLE_SIZE_MB * 1024 * 1024
+
+export function generateRandomString(length: number) {
+  let result = "";
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
+
+export function formatStringDate(date: any) {
+  let data = new Date(date);
+  let year = data.getFullYear();
+  let month = String(data.getMonth() + 1).padStart(2, '0');
+  let day = String(data.getDate()).padStart(2, '0');
+  let hour = String(data.getHours()).padStart(2, '0');
+  let minute = String(data.getMinutes()).padStart(2, '0');
+  let second = String(data.getSeconds()).padStart(2, '0');
+  return (
+    year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second
+  );
+}
+/** Returns true when the file exceeds the deploy-time upload limit. */
+export function fileSizeVerification(file: Pick<File, 'size'>, silent = false) {
+  if (file.size <= MAX_FILE_SIZE_BYTES) return false;
+  if (!silent) {
+    MessagePlugin.error(`File size cannot exceed ${MAX_FILE_SIZE_MB}MB!`);
+  }
+  return true;
+}
+
+/**
+ * Returns true when the file should be **rejected**.
+ * @param validTypes - override the default extension whitelist with a dynamic set (e.g. from engine registry).
+ */
+export function kbFileTypeVerification(file: any, silent = false, validTypes?: Set<string> | string[]) {
+  if (shouldRejectKnowledgeFileType(file.name, validTypes)) {
+    if (!silent) {
+      MessagePlugin.error('Unsupported file type!');
+    }
+    return true;
+  }
+  return fileSizeVerification(file, silent);
+}

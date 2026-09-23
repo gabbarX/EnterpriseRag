@@ -1,0 +1,269 @@
+<template>
+  <div class="action-card interaction-inline" :class="{ 'action-pending': !resolved }">
+    <div class="action-header no-results">
+      <div class="action-title">
+        <t-icon class="action-title-icon" :name="headerIcon" />
+        <span class="action-name">{{ mainTitle }}</span>
+      </div>
+    </div>
+    <div class="interaction-status-summary">
+      <div class="results-summary-text">
+        <span v-if="resolved" class="status-label">{{ statusLine }}</span>
+        <span v-if="!resolved" class="inline-actions">
+          <button type="button" class="inline-action" :disabled="canceling || authorizing" @click="skip">
+            {{ 'Skip' }}
+          </button>
+          <span class="inline-dot">·</span>
+          <button type="button" class="inline-action is-primary" :disabled="authorizing || canceling"
+            @click="authorize">
+            {{ 'Authorize' }}
+          </button>
+        </span>
+        <template v-if="!resolved && secondsLeft >= 0">
+          <span class="inline-dot">·</span>
+          <span class="action-timer" :class="timerClass">
+            {{ formatCountdown(secondsLeft) }}
+          </span>
+        </template>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { MessagePlugin } from 'tdesign-vue-next'
+import {
+  cancelMCPOAuth,
+  getMCPOAuthAuthorizeURL,
+  getMCPOAuthStatus,
+  resolveMCPOAuth,
+  refreshMCPMetadata,
+  MCP_OAUTH_CALLBACK_PATH,
+} from '@/api/mcp-service'
+import {
+  cancelEmbedMCPOAuth,
+  getEmbedMCPOAuthAuthorizeURL,
+  getEmbedMCPOAuthStatus,
+  resolveEmbedMCPOAuth,
+} from '@/api/embed'
+
+const props = defineProps<{
+  pendingId: string
+  serviceId: string
+  serviceName: string
+  mcpToolName?: string
+  timeoutSeconds?: number
+  requestedAt?: number
+  resolved?: boolean
+  authorized?: boolean
+  resolveReason?: string
+  timedOut?: boolean
+  canceled?: boolean
+  embeddedMode?: boolean
+  embedChannelId?: string
+  embedToken?: string
+  embedSessionId?: string
+  embedSessionSig?: string
+  embedVisitorId?: string
+}>()
+
+const useEmbedOAuth = () =>
+  props.embeddedMode
+  && props.embedChannelId
+  && props.embedToken
+  && props.embedSessionId
+  && props.embedSessionSig
+  && props.embedVisitorId
+
+
+const authorizing = ref(false)
+const canceling = ref(false)
+const now = ref(Date.now())
+let clock: number | null = null
+let poll: number | null = null
+
+const deadline = computed(() => {
+  const base = (props.requestedAt || 0) * 1000
+  const add = (props.timeoutSeconds || 600) * 1000
+  return base + add
+})
+
+const secondsLeft = computed(() => {
+  if (props.resolved) return -1
+  return Math.max(0, Math.floor((deadline.value - now.value) / 1000))
+})
+
+const timerClass = computed(() => {
+  if (secondsLeft.value <= 30) return 'timer-critical'
+  if (secondsLeft.value <= 120) return 'timer-warning'
+  return ''
+})
+
+const headerIcon = computed(() => {
+  if (!props.resolved) return 'lock-on'
+  if (props.authorized) return 'check-circle'
+  return 'close-circle'
+})
+
+const targetLabel = computed(() => (
+  props.mcpToolName
+    ? `${props.serviceName} › ${props.mcpToolName}`
+    : props.serviceName
+))
+
+const mainTitle = computed(() => {
+  if (!props.resolved) {
+    return `Awaiting authorization · ${targetLabel.value}`
+  }
+  return props.mcpToolName
+    ? `OAuth · ${props.serviceName} › ${props.mcpToolName}`
+    : `OAuth · ${props.serviceName}`
+})
+
+const statusLine = computed(() => {
+  if (!props.resolved) return 'Awaiting authorization'
+  if (props.authorized) return 'Authorized'
+  if (props.timedOut) return 'Authorization timed out'
+  return 'Canceled'
+})
+
+function formatCountdown(s: number): string {
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  const r = s % 60
+  return `${m}:${r.toString().padStart(2, '0')}`
+}
+
+function stopPoll() {
+  if (poll) {
+    window.clearInterval(poll)
+    poll = null
+  }
+}
+
+const skip = async () => {
+  if (props.resolved || canceling.value) return
+  canceling.value = true
+  try {
+    if (useEmbedOAuth()) {
+      await cancelEmbedMCPOAuth(
+        props.embedChannelId!,
+        props.embedToken!,
+        props.embedSessionId!,
+        props.embedSessionSig!,
+        props.embedVisitorId!,
+        props.pendingId,
+      )
+    } else {
+      await cancelMCPOAuth(props.pendingId)
+    }
+  } catch (e: any) {
+    const msg = e?.response?.data?.error?.message || e?.message || 'Failed to skip. Please try again.'
+    MessagePlugin.error(msg)
+  } finally {
+    canceling.value = false
+  }
+}
+
+const authorize = async () => {
+  if (props.resolved || authorizing.value) return
+  authorizing.value = true
+  try {
+    const redirectUri = window.location.origin + MCP_OAUTH_CALLBACK_PATH
+    const frontendRedirect = useEmbedOAuth()
+      ? window.location.pathname + window.location.search
+      : '/'
+    const authorization = useEmbedOAuth()
+      ? await getEmbedMCPOAuthAuthorizeURL(
+        props.embedChannelId!,
+        props.embedToken!,
+        props.embedSessionId!,
+        props.embedSessionSig!,
+        props.embedVisitorId!,
+        props.serviceId,
+        { redirect_uri: redirectUri, frontend_redirect: frontendRedirect },
+      )
+      : await getMCPOAuthAuthorizeURL(props.serviceId, {
+        redirect_uri: redirectUri,
+        frontend_redirect: frontendRedirect,
+      })
+    if (!authorization.authorizationUrl || !authorization.authorizationAttempt) {
+      MessagePlugin.error('Failed to start authorization')
+      authorizing.value = false
+      return
+    }
+    const popup = window.open(authorization.authorizationUrl, 'mcp_oauth', 'width=600,height=720')
+    poll = window.setInterval(async () => {
+      const closed = !popup || popup.closed
+      let ok = false
+      try {
+        ok = useEmbedOAuth()
+          ? await getEmbedMCPOAuthStatus(
+            props.embedChannelId!,
+            props.embedToken!,
+            props.embedSessionId!,
+            props.embedSessionSig!,
+            props.embedVisitorId!,
+            props.serviceId,
+            authorization.authorizationAttempt,
+          )
+          : await getMCPOAuthStatus(props.serviceId, authorization.authorizationAttempt)
+      } catch {
+        /* transient; keep polling */
+      }
+      if (ok) {
+        stopPoll()
+        try { popup?.close() } catch { /* cross-origin close may throw */ }
+        try {
+          if (useEmbedOAuth()) {
+            await resolveEmbedMCPOAuth(
+              props.embedChannelId!,
+              props.embedToken!,
+              props.embedSessionId!,
+              props.embedSessionSig!,
+              props.embedVisitorId!,
+              props.pendingId,
+              { service_id: props.serviceId, decision: 'authorize' },
+            )
+          } else {
+            await resolveMCPOAuth(props.pendingId, { service_id: props.serviceId, decision: 'authorize' })
+            try {
+              await refreshMCPMetadata(props.serviceId)
+            } catch {
+              /* next describe/list will live-fill this user's directory */
+            }
+          }
+          MessagePlugin.success('Authorized. Resuming…')
+        } catch (e: any) {
+          const msg = e?.response?.data?.error?.message || e?.message || 'Failed to resume. Please try again.'
+          MessagePlugin.error(msg)
+        }
+        authorizing.value = false
+      } else if (closed) {
+        stopPoll()
+        authorizing.value = false
+      }
+    }, 1500)
+  } catch (e: any) {
+    const msg = e?.response?.data?.error?.message || e?.message || 'Failed to start authorization'
+    MessagePlugin.error(msg)
+    authorizing.value = false
+  }
+}
+
+onMounted(() => {
+  clock = window.setInterval(() => {
+    now.value = Date.now()
+  }, 1000)
+})
+
+onBeforeUnmount(() => {
+  if (clock) window.clearInterval(clock)
+  stopPoll()
+})
+</script>
+
+<style scoped lang="less">
+@import './agent-interaction-card.less';
+</style>

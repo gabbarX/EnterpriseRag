@@ -1,0 +1,102 @@
+{
+  "description": "Whether two topic labels name the same subject. Merging is the decision that cannot be reviewed by reading the prompt: too strict and one subject spreads across rows that never reach the promotion threshold, too loose and every specific question in a domain collapses into one useless bucket. These are the pairs that mark the boundary. Every example here is invented — none of it comes from a real workspace, and none of it should.",
+  "cases": [
+    {
+      "name": "rephrasing",
+      "tracked": "store shift scheduling",
+      "incoming": "staff rota planning",
+      "same": true,
+      "why": "Two wordings for one thing. They share almost no characters, so only the model tier can settle it."
+    },
+    {
+      "name": "elaboration",
+      "tracked": "chain store shift scheduling",
+      "incoming": "store shift scheduling",
+      "same": true,
+      "why": "One side carries a qualifier the other drops; it is still the same subject."
+    },
+    {
+      "name": "harmless qualifier",
+      "tracked": "order API rate limiting",
+      "incoming": "order API rate limiting issue",
+      "same": true,
+      "why": "\"issue\" does not change the subject itself."
+    },
+    {
+      "name": "abbreviation",
+      "tracked": "CI pipeline",
+      "incoming": "continuous integration pipeline",
+      "same": true,
+      "why": "An abbreviation and its expansion are one thing, with barely any character overlap."
+    },
+    {
+      "name": "specific lookup inside a broad subject",
+      "tracked": "warehouse inward process",
+      "incoming": "last month GRN numbers for warehouse 3",
+      "same": false,
+      "why": "It does sit in the same area, but it is one lookup rather than a standing interest. Folding it in turns the interest list into a bucket that holds everything."
+    },
+    {
+      "name": "different question in the same domain",
+      "tracked": "order API rate limiting",
+      "incoming": "order API authentication",
+      "same": false,
+      "why": "Two different concerns about the same endpoint."
+    },
+    {
+      "name": "hyponym",
+      "tracked": "backend architecture choices",
+      "incoming": "order API rate limit tuning",
+      "same": false,
+      "why": "A narrower concept is not the same thing, or one broad subject would swallow a whole domain."
+    },
+    {
+      "name": "two aspects of one thing",
+      "tracked": "annual audit document prep",
+      "incoming": "annual audit query responses",
+      "same": false,
+      "why": "Two stages of the same exercise, and they are about different things. Pairs like this really were merged in production."
+    },
+    {
+      "name": "broad subject versus a lookup in it",
+      "tracked": "annual day organising",
+      "incoming": "annual day signup lookup",
+      "same": false,
+      "why": "Running an event and checking who signed up are two different things. Pairs like this really were merged in production."
+    },
+    {
+      "name": "unrelated",
+      "tracked": "store shift scheduling",
+      "incoming": "order API rate limiting",
+      "same": false,
+      "why": "Nothing in common; no tier should merge these."
+    },
+    {
+      "name": "same word different field",
+      "tracked": "image partition model tuning",
+      "incoming": "database table partitioning",
+      "same": false,
+      "why": "Sharing the word \"partition\" is not a relationship."
+    }
+  ],
+  "granularity": {
+    "note": "A subject has to be a recurring AREA, not one question. Put a name, a number, a date, a version or a quantity in the label and it can only ever match itself: counted once, stuck at one hit forever, and the threshold means nothing.",
+    "cases": [
+      {
+        "question": "Which GRN numbers did warehouse 3 log last month?",
+        "good": "warehouse GRN lookup",
+        "bad": "warehouse 3 March 2026 GRN number lookup log"
+      },
+      {
+        "question": "What is the default page size on the v2.3 orders API?",
+        "good": "orders API usage",
+        "bad": "v2.3 orders API default page size lookup"
+      },
+      {
+        "question": "Who is the business contact for the settlement platform?",
+        "good": "settlement platform",
+        "bad": "settlement platform business contact lookup log"
+      }
+    ]
+  }
+}

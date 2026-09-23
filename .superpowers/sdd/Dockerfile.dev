@@ -1,0 +1,45 @@
+# Dev/verification image for the EnterpriseRag rebrand.
+# Scratch tooling — lives under the git-ignored .superpowers/ and is never committed.
+#
+# Exists because the Windows host has no make, no C compiler, no golangci-lint and no swag,
+# and three dependencies are CGO-only (pg_query_go/v6, sqlite-vec-go-bindings,
+# duckdb-go-bindings). internal/utils imports pg_query and is imported repo-wide, so
+# `go build ./...` fails on a pristine tree on the host.
+FROM golang:1.26-bookworm
+
+ENV CGO_ENABLED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    GOFLAGS=-buildvcs=false
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        make gcc g++ libc6-dev pkg-config \
+        git curl ca-certificates ripgrep \
+        python3 python3-pip python3-venv python-is-python3 \
+        libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
+# libsqlite3-dev supplies sqlite3.h, which github.com/asg017/sqlite-vec-go-bindings/cgo
+# includes. Without it `go build ./...` fails with "sqlite3.h: No such file or directory".
+
+# Node 22 for the Vue frontend (Vite 6/7, TypeScript 6).
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Go tooling the Makefile expects.
+RUN go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest \
+    && go install github.com/swaggo/swag/cmd/swag@latest
+
+# Python test tooling for docreader/ and mcp-server/.
+# PYTHONUSERBASE points at a mountable volume so per-project deps installed with
+# `pip install --user` survive between --rm runs (docreader/ and mcp-server/ pytest
+# suites need urllib3, grpcio, etc. which are not baked into this image).
+ENV PYTHONUSERBASE=/pyuser \
+    PATH=/pyuser/bin:/usr/local/go/bin:/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+RUN pip3 install --break-system-packages --no-cache-dir pytest uv \
+    && mkdir -p /pyuser
+
+# The bind-mounted repo is owned by the host user; stop git refusing to operate in it.
+RUN git config --global --add safe.directory /src
+
+WORKDIR /src
+CMD ["bash"]

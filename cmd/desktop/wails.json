@@ -1,0 +1,23 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "sustainability.ai Lite",
+  "outputfilename": "EnterpriseRag Lite",
+  "frontend:dir": "../../frontend",
+  "wailsjsdir": "../../frontend/src",
+  "build:tags": "desktop",
+  "author": {
+    "name": "sustainability.ai Team",
+    "email": ""
+  },
+  "info": {
+    "companyName": "ORG_PLACEHOLDER",
+    "productName": "sustainability.ai Lite",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright 2026 ORG_PLACEHOLDER",
+    "comments": "sustainability.ai Desktop Edition"
+  },
+  "mac": {
+    "category": "public.app-category.productivity",
+    "titlebar": "hiddenInset"
+  }
+}

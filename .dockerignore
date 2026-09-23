@@ -1,0 +1,79 @@
+# VCS / CI
+.git/
+.github/
+.gitignore
+.gitattributes
+
+# Editor / IDE local configuration
+.cursor/
+.claude/
+.codebuddy/
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Python virtualenvs / caches
+**/.venv/
+.venv_proto/
+**/.python-version
+**/__pycache__/
+**/*.pyc
+
+# Node / frontend
+# Note: build-ui uses ./frontend as its build context, so the root .dockerignore
+# does not apply to it, and the Dockerfiles for the other images
+# (app/docreader/sandbox) never reference frontend/. The whole frontend/
+# directory can therefore be excluded here.
+**/node_modules/
+frontend/
+
+# Logs / temporary files
+logs/
+tmp/
+temp/
+*.log
+*.pid
+
+# Local build artefacts / binaries
+enterpriserag
+enterpriserag-lite
+/server
+/dist/
+/build/
+/artifacts/browserskill/
+cmd/desktop/build/bin/
+
+# Local data / model files
+/models/
+data/files/
+data/*.db
+data/*.db-wal
+data/*.db-shm
+test/data/mswag.txt
+
+# Sensitive files
+.env
+.env.lite
+*.pem
+*.key
+*.crt
+*_key
+*_secret
+
+# Large archives
+packages/protoc-*.zip
+!packages/protoc-*-linux-x86_64.zip
+!packages/protoc-*-linux-aarch_64.zip
+!packages/protoc-*-linux-arm.zip
+
+# Local test scripts
+configure-ollama.sh
+fix-docker.sh
+/scripts/scale_dev_jobs.sh
+
+# Note: do NOT exclude docs/ — the docs.go / swagger.json inside it form the
+# swagger package that the Go code depends on.
+# Note: do NOT add a *.md wildcard exclusion — skills/preloaded/**/SKILL.md must
+# ship inside the image for the agent to use.

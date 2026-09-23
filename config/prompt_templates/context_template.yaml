@@ -1,0 +1,52 @@
+# Context templates
+templates:
+  - id: "default_context"
+    name: "Standard Template"
+    description: "Standard context formatting template"
+    default: true
+    has_knowledge_base: true
+    content: |
+      ## Reference materials (source data)
+      {{contexts}}
+
+      ## Request metadata
+      Current time: {{current_time}} {{current_week}}
+
+      ## User request
+      {{query}}
+
+  - id: "detailed_context"
+    name: "Detailed Template"
+    description: "Context template with detailed instructions"
+    has_knowledge_base: true
+    content: |
+      ## Reference materials (source data)
+      {{contexts}}
+
+      ## Request metadata
+      Current time: {{current_time}} {{current_week}}
+      Default language: English
+
+      ## User request
+      {{query}}
+
+  - id: "simple_context"
+    name: "Simple Template"
+    description: "Simple context template"
+    has_knowledge_base: true
+    content: |
+      Reference materials (source data):
+      {{contexts}}
+
+      User request: {{query}}
+
+  - id: "qa_context"
+    name: "Q&A Template"
+    description: "Template specialized for Q&A scenarios"
+    has_knowledge_base: true
+    content: |
+      Potentially relevant reference materials (source data):
+      {{contexts}}
+
+      User request:
+      {{query}}

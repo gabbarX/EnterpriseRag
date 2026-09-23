@@ -1,0 +1,48 @@
+MIME-Version: 1.0
+Subject: Titled Image Contract
+Content-Type: multipart/related; type="text/html"; boundary="----=_NextPart_Contract"
+
+------=_NextPart_Contract
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+Content-Location: https://example.com/titled-image
+
+<html>
+  <body>
+    <table>
+      <tr><th>Leave Type</th><th>Entitlement</th></tr>
+      <tr><td>Earned Leave</td><td>18 days</td></tr>
+    </table>
+
+    <p><img src="images/%E0%A4%AA%E0%A5%83%E0%A4%B7%E0%A5%8D%E0%A4%A0%201%20%28%E0%A4%AA%E0%A4%B0%E0%A5%80%E0%A4%95%E0%A5%8D%E0%A4%B7%E0%A4%A3%29.gif" alt="चित्र" title="चरण 1) चित्र"></p>
+
+    <p>Carry forward is capped at 30 days.</p>
+
+    <p>alpha<br>beta</p>
+
+    <p><br><br><br></p>
+
+    <ul>
+      <li>parent
+        <ul><li>child</li></ul>
+      </li>
+    </ul>
+
+    <blockquote><p>quoted</p></blockquote>
+
+    <pre><code>line1
+
+
+line2
+</code></pre>
+  </body>
+</html>
+
+------=_NextPart_Contract
+Content-Type: image/gif
+Content-Transfer-Encoding: base64
+Content-Location: images/%E0%A4%AA%E0%A5%83%E0%A4%B7%E0%A5%8D%E0%A4%A0%201%20%28%E0%A4%AA%E0%A4%B0%E0%A5%80%E0%A4%95%E0%A5%8D%E0%A4%B7%E0%A4%A3%29.gif
+
+R0lGODdhQABAAIEAAFCM3AAAAAAAAAAAACwAAAAAQABAAEAIaQABCBxIsKDBgwgTKlzIsKHDhxAjSpxIsaLFixgzatzIsaPHjyBDihxJsqTJkyhTqlzJsqXLlzBjypxJs6bNmzhz6tzJs6fPn0CDCh1KtKjRo0iTKl3KtKnTp1CjSp1KtarVq1izagUQEAA7
+
+------=_NextPart_Contract--

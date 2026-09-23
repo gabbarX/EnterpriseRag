@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test HTML Document</title>
+</head>
+<body>
+    <h1>Test HTML Document</h1>
+
+    <p>This is a test HTML document, used to exercise the HTML parsing pipeline.</p>
+
+    <h2>With an image</h2>
+    <img src="https://example.com/image.jpg" alt="Test image">
+
+    <h2>With a link</h2>
+    <p>This is a <a href="https://example.com">test link</a>.</p>
+
+    <h2>With a code block</h2>
+    <pre><code>
+def hello_world():
+    print("Hello, World!")
+    </code></pre>
+
+    <h2>With a table</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Leave Type</th>
+                <th>Days</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Earned Leave</td>
+                <td>18</td>
+            </tr>
+            <tr>
+                <td>Casual Leave</td>
+                <td>12</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Chunking test</h2>
+    <p>This section exercises chunking, so that the HTML structure stays intact when it is split.</p>
+    <ul>
+        <li>First block of content</li>
+        <li>Second block of content</li>
+        <li>Third block of content</li>
+    </ul>
+
+    <h2>Overlap test</h2>
+    <p>This section may overlap with the blocks before and after it, so that the context stays continuous.</p>
+</body>
+</html> 

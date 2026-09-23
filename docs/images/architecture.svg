@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 760" width="1180" height="760" role="img" aria-label="EnterpriseRag architecture">
+  <title>EnterpriseRag architecture</title>
+  <style>
+    .t   { font-family: Inter, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #132238; }
+    .h1  { font-size: 25px; font-weight: 700; }
+    .h2  { font-size: 15px; font-weight: 700; letter-spacing: .08em; }
+    .box { font-size: 13px; }
+    .sub { font-size: 11px; fill: #5a6b80; }
+    .card   { fill: #ffffff; stroke: #c9d4e2; rx: 7; }
+    .band   { fill: #f7f9fc; stroke: #c9d4e2; rx: 10; }
+    .accent { stroke: #f0b429; }
+    .arrow  { stroke: #5a6b80; stroke-width: 1.6; fill: none; marker-end: url(#a); }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#5a6b80"/>
+    </marker>
+  </defs>
+
+  <text class="t h1" x="590" y="38" text-anchor="middle">EnterpriseRag Architecture</text>
+
+  <!-- Input channels -->
+  <rect class="band" x="30" y="58" width="1120" height="92"/>
+  <text class="t h2" x="590" y="80" text-anchor="middle">INPUT CHANNELS</text>
+  <g>
+    <rect class="card" x="52" y="92" width="196" height="44"/>
+    <text class="t box" x="150" y="112" text-anchor="middle">Web UI &amp; Scoped API</text>
+    <text class="t sub" x="150" y="127" text-anchor="middle">RBAC, API keys</text>
+
+    <rect class="card" x="268" y="92" width="196" height="44"/>
+    <text class="t box" x="366" y="112" text-anchor="middle">IM Bots</text>
+    <text class="t sub" x="366" y="127" text-anchor="middle">Slack / Telegram / Mattermost</text>
+
+    <rect class="card" x="484" y="92" width="196" height="44"/>
+    <text class="t box" x="582" y="112" text-anchor="middle">Website Embed Widget</text>
+    <text class="t sub" x="582" y="127" text-anchor="middle">domain allow-list, token exchange</text>
+
+    <rect class="card" x="700" y="92" width="196" height="44"/>
+    <text class="t box" x="798" y="112" text-anchor="middle">MCP Server</text>
+    <text class="t sub" x="798" y="127" text-anchor="middle">stdio / SSE / HTTP</text>
+
+    <rect class="card" x="916" y="92" width="212" height="44"/>
+    <text class="t box" x="1022" y="112" text-anchor="middle">CLI</text>
+    <text class="t sub" x="1022" y="127" text-anchor="middle">enterpriserag + Agent Skills</text>
+  </g>
+  <path class="arrow" d="M590 150 V180"/>
+
+  <!-- Core engine -->
+  <rect class="band" x="30" y="182" width="1120" height="288"/>
+  <text class="t h2" x="590" y="205" text-anchor="middle">CORE ENGINE</text>
+
+  <rect class="card" x="52" y="218" width="520" height="238" fill="#fbfdff"/>
+  <text class="t h2" x="312" y="242" text-anchor="middle" font-size="13">Document Processing</text>
+  <g>
+    <rect class="card" x="72" y="254" width="480" height="32"/>
+    <text class="t box" x="312" y="274" text-anchor="middle">Parsing — PDF / Office (anydoc) / HTML / EPUB / MHTML / XMind</text>
+    <rect class="card" x="72" y="294" width="480" height="32"/>
+    <text class="t box" x="312" y="314" text-anchor="middle">Chunking — adaptive, editable chunks with revisions</text>
+    <rect class="card" x="72" y="334" width="480" height="32"/>
+    <text class="t box" x="312" y="354" text-anchor="middle">Embedding — Ollama / OpenAI-compatible APIs</text>
+    <rect class="card" x="72" y="374" width="480" height="32"/>
+    <text class="t box" x="312" y="394" text-anchor="middle">Graph building — optional Neo4j</text>
+    <rect class="card" x="72" y="414" width="480" height="32"/>
+    <text class="t box" x="312" y="434" text-anchor="middle">Wiki generation — pages, links, revision history</text>
+  </g>
+
+  <rect class="card" x="608" y="218" width="520" height="238" fill="#fbfdff"/>
+  <text class="t h2" x="868" y="242" text-anchor="middle" font-size="13">RAG &amp; Agent Engine</text>
+  <g>
+    <rect class="card" x="628" y="254" width="480" height="32"/>
+    <text class="t box" x="868" y="274" text-anchor="middle">Query understanding and rewriting</text>
+    <rect class="card" x="628" y="294" width="480" height="32"/>
+    <text class="t box" x="868" y="314" text-anchor="middle">Hybrid retrieval — BM25 + vector + graph + rerank</text>
+    <rect class="card" x="628" y="334" width="480" height="32"/>
+    <text class="t box" x="868" y="354" text-anchor="middle">ReAct agent loop — @Skill / @MCP, context compaction</text>
+    <rect class="card" x="628" y="374" width="480" height="32"/>
+    <text class="t box" x="868" y="394" text-anchor="middle">Response generation — SSE streaming, citations</text>
+    <rect class="card accent" x="628" y="414" width="234" height="32"/>
+    <text class="t box" x="745" y="434" text-anchor="middle">Skill catalogue</text>
+    <rect class="card accent" x="874" y="414" width="234" height="32"/>
+    <text class="t box" x="991" y="430" text-anchor="middle">Sandbox — disabled by default</text>
+  </g>
+  <path class="arrow" d="M572 336 H608"/>
+  <path class="arrow" d="M608 356 H572"/>
+
+  <path class="arrow" d="M312 470 V500"/>
+  <path class="arrow" d="M868 470 V500"/>
+
+  <!-- Storage / external -->
+  <rect class="band" x="30" y="502" width="556" height="150"/>
+  <text class="t h2" x="308" y="524" text-anchor="middle">STORAGE</text>
+  <g>
+    <rect class="card" x="50" y="536" width="126" height="48"/>
+    <text class="t box" x="113" y="556" text-anchor="middle">PostgreSQL</text>
+    <text class="t sub" x="113" y="571" text-anchor="middle">ParadeDB / pgvector</text>
+
+    <rect class="card" x="186" y="536" width="126" height="48"/>
+    <text class="t box" x="249" y="556" text-anchor="middle">Vector stores</text>
+    <text class="t sub" x="249" y="571" text-anchor="middle">Qdrant · Milvus · Weaviate</text>
+
+    <rect class="card" x="322" y="536" width="126" height="48"/>
+    <text class="t box" x="385" y="556" text-anchor="middle">Search engines</text>
+    <text class="t sub" x="385" y="571" text-anchor="middle">Elasticsearch · OpenSearch</text>
+
+    <rect class="card" x="458" y="536" width="110" height="48"/>
+    <text class="t box" x="513" y="556" text-anchor="middle">Redis</text>
+    <text class="t sub" x="513" y="571" text-anchor="middle">queue · cache</text>
+
+    <rect class="card" x="50" y="592" width="262" height="44"/>
+    <text class="t box" x="181" y="612" text-anchor="middle">Object storage — Local / MinIO / S3</text>
+    <text class="t sub" x="181" y="627" text-anchor="middle">multiple instances per workspace</text>
+
+    <rect class="card" x="322" y="592" width="246" height="44"/>
+    <text class="t box" x="445" y="612" text-anchor="middle">Neo4j (optional)</text>
+    <text class="t sub" x="445" y="627" text-anchor="middle">knowledge graph</text>
+  </g>
+
+  <rect class="band" x="596" y="502" width="554" height="150"/>
+  <text class="t h2" x="873" y="524" text-anchor="middle">EXTERNAL SERVICES</text>
+  <g>
+    <rect class="card" x="616" y="536" width="166" height="48"/>
+    <text class="t box" x="699" y="556" text-anchor="middle">Model providers</text>
+    <text class="t sub" x="699" y="571" text-anchor="middle">OpenAI · Anthropic · Gemini</text>
+
+    <rect class="card" x="792" y="536" width="166" height="48"/>
+    <text class="t box" x="875" y="556" text-anchor="middle">OpenRouter / Generic</text>
+    <text class="t sub" x="875" y="571" text-anchor="middle">any OpenAI-compatible endpoint</text>
+
+    <rect class="card" x="968" y="536" width="162" height="48"/>
+    <text class="t box" x="1049" y="556" text-anchor="middle">Ollama</text>
+    <text class="t sub" x="1049" y="571" text-anchor="middle">local runtime</text>
+
+    <rect class="card" x="616" y="592" width="166" height="44"/>
+    <text class="t box" x="699" y="612" text-anchor="middle">Web search</text>
+    <text class="t sub" x="699" y="627" text-anchor="middle">DuckDuckGo · SearXNG · others</text>
+
+    <rect class="card" x="792" y="592" width="166" height="44"/>
+    <text class="t box" x="875" y="612" text-anchor="middle">Data sources</text>
+    <text class="t sub" x="875" y="627" text-anchor="middle">Confluence · GitLab · Notion · RSS</text>
+
+    <rect class="card" x="968" y="592" width="162" height="44"/>
+    <text class="t box" x="1049" y="612" text-anchor="middle">Langfuse</text>
+    <text class="t sub" x="1049" y="627" text-anchor="middle">tracing</text>
+  </g>
+
+  <rect class="band" x="30" y="668" width="1120" height="58"/>
+  <text class="t box" x="590" y="695" text-anchor="middle">Model management  ·  AES-256-GCM secret encryption  ·  Multi-workspace RBAC + audit log  ·  Worker-pool governance  ·  Runtime queue dashboard</text>
+  <text class="t sub" x="590" y="713" text-anchor="middle">Self-hostable on Docker Compose or Kubernetes (Helm). Deployment defaults target India: TZ Asia/Kolkata, AWS ap-south-1 reference region.</text>
+</svg>

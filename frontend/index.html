@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>sustainability.ai</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="renderer" content="webkit">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="keywords" content="knowledge question answering, retrieval augmented generation, RAG, conversational AI, document understanding, semantic search, natural language processing, NLP, open source AI, AI assistant"/>
+    <meta name="description" content="sustainability.ai — a cleaner tomorrow, smarter today. Document understanding and semantic retrieval built on large language models."/>
+    <link rel="shortcut icon" type="image/png" href="./public/favicon.ico"/>
+    <link rel="apple-touch-icon" sizes="180x180" type="image/png" href="/apple-touch-icon.png"/>
+    <meta name="theme-color" content="#9444e6">
+</head>
+<body>
+<script>
+(function(){
+  var t=localStorage.getItem('EnterpriseRag_theme')||'light';
+  if(t==='system')t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+  document.documentElement.setAttribute('theme-mode',t);
+  /* Must match --td-bg-color-page in theme.css, otherwise the page background jumps from #fff to #eee once styles load and the repaint flashes */
+  var bg=t==='dark'?'#181818':'#eee';
+  document.documentElement.style.background=bg;
+  document.documentElement.style.minHeight='100%';
+  document.documentElement.style.colorScheme=t==='dark'?'dark':'light';
+  document.body.style.background=bg;
+  document.body.style.minHeight='100%';
+  try{
+    var w=window.runtime;
+    if(w){
+      if(t==='dark'){
+        if(w.WindowSetDarkTheme)w.WindowSetDarkTheme();
+        if(w.WindowSetBackgroundColour)w.WindowSetBackgroundColour(24,24,24,255);
+      }else{
+        if(w.WindowSetLightTheme)w.WindowSetLightTheme();
+        if(w.WindowSetBackgroundColour)w.WindowSetBackgroundColour(238,238,238,255);
+      }
+    }
+  }catch(_){}
+})();
+</script>
+<script>
+(function(){
+  try {
+    if (localStorage.getItem('enterpriserag_lite_mode') !== 'true') return;
+    var saved = sessionStorage.getItem('enterpriserag_lite_last_path');
+    if (!saved || saved.indexOf('/platform/') !== 0 || saved.indexOf('/platform/organizations') === 0) return;
+    var path = window.location.pathname;
+    if (path !== '/' && path !== '/platform' && path !== '/platform/knowledge-bases') return;
+    var target = saved.indexOf('#') >= 0 ? saved.slice(0, saved.indexOf('#')) : saved;
+    if (!target) return;
+    var current = window.location.pathname + window.location.search;
+    if (target !== current) window.history.replaceState(window.history.state, '', target);
+  } catch (e) {}
+})();
+</script>
+<script src="/config.js"></script>
+<!--
+  Offline deployment support: load the tdesign-icons SVG sprite locally up front so
+  tdesign-vue-next's <t-icon> does not request https://tdesign.gtimg.com at runtime
+  (see issue #867 / #897).
+  When upgrading tdesign-icons-vue-next, update public/tdesign-icons/<version>/fonts/index.js to match.
+-->
+<script src="/tdesign-icons/0.4.1/fonts/index.js"></script>
+<div id="app"></div>
+<script>
+(function(){
+  var t=localStorage.getItem('EnterpriseRag_theme')||'light';
+  if(t==='system')t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+  var bg=t==='dark'?'#181818':'#eee';
+  var el=document.getElementById('app');
+  if(el){ el.style.background=bg; el.style.minHeight='100%'; }
+})();
+</script>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
+

@@ -1,0 +1,18 @@
+{
+  "tests/test_excel_parser.py::ExcelFormatDetectionTest::test_detect_xls_magic": true,
+  "tests/test_excel_parser.py::ExcelFormatDetectionTest::test_detect_xlsx_and_engine": true,
+  "tests/test_excel_parser.py::XlsxMergeFillTest::test_excel_parser_reads_merged_workbook_with_chart": true,
+  "tests/test_excel_parser.py::ExcelImageFilterTest::test_dispimg_text_values_are_excluded": true,
+  "tests/test_excel_parser.py::ExcelImageFilterTest::test_dispimg_with_equals_prefix": true,
+  "tests/test_excel_parser.py::ExcelImageFilterTest::test_image_function_variations": true,
+  "tests/test_excel_parser.py::ExcelImageFilterTest::test_real_world_wps_dispimg": true,
+  "tests/test_excel_parser.py::ExcelParserTest::test_header_mode_generates_stable_labels_for_duplicate_and_empty_cells": true,
+  "tests/test_excel_parser.py::ExcelParserTest::test_parse_phantom_shared_strings_workbook": true,
+  "tests/test_excel_parser.py::ExcelParserTest::test_single_row_xlsx_is_not_consumed_in_header_mode": true,
+  "tests/test_excel_parser.py::ExcelParserTest::test_xlsx_explicit_false_override_keeps_first_row_as_data": true,
+  "tests/test_excel_parser.py::ExcelParserTest::test_xlsx_first_row_header_mode_repeats_column_context": true,
+  "tests/test_excel_parser.py::ExcelParserTest::test_xlsx_keeps_first_row_as_data_by_default": true,
+  "tests/test_ssrf.py::TestSSRFValidation::test_allows_public_https": true,
+  "tests/test_ssrf.py::TestSSRFValidation::test_blocks_invalid_port": true,
+  "tests/test_ssrf_proxy.py::TestSSRFProxy::test_webkit_redirects_and_subresources_use_proxy": true
+}

@@ -1,0 +1,17 @@
+[
+  "test_chat_sse.py::ChatSSETest::test_crlf_multiline_frame_with_fragmented_utf8",
+  "test_chat_sse.py::ChatSSETest::test_discards_unterminated_event_at_eof",
+  "test_chat_sse.py::ChatSSETest::test_dispatches_once_per_frame_not_once_per_data_line",
+  "test_chat_sse.py::ChatSSETest::test_event_size_limit_resets_after_each_frame",
+  "test_chat_sse.py::ChatSSETest::test_ignores_metadata_comments_and_empty_frames",
+  "test_chat_sse.py::ChatSSETest::test_multiline_answers_and_references_in_both_chat_paths",
+  "test_chat_sse.py::ChatSSETest::test_multiline_complete_stops_before_later_events",
+  "test_chat_sse.py::ChatSSETest::test_multiline_error_propagates_and_closes_response",
+  "test_chat_sse.py::ChatSSETest::test_rejects_oversized_event_and_closes_response",
+  "tests/test_agent_id_resolution.py::test_resolve_agent_id_accepts_agent_name_case_insensitively",
+  "tests/test_agent_id_resolution.py::test_resolve_agent_id_accepts_non_uuid_agent_id",
+  "tests/test_kb_id_resolution.py::test_normalize_kb_entries_flattens_shared_rows",
+  "tests/test_kb_id_resolution.py::test_normalize_kb_entries_passes_through_owned_rows",
+  "tests/test_kb_id_resolution.py::test_resolve_kb_id_accepts_shared_kb_name",
+  "tests/test_kb_id_resolution.py::test_resolve_kb_id_prefers_owned_over_shared_name"
+]

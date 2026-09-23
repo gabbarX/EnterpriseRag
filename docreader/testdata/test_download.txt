@@ -1,0 +1,19 @@
+This is a test document
+containing several lines
+used to exercise document parsing
+
+This document contains the following:
+1. Basic text content
+2. Multi-line paragraphs
+3. List items
+
+Chunking test:
+- First block of content
+- Second block of content
+- Third block of content
+
+Overlap test:
+This section may overlap with the blocks before and after it, so that the context stays continuous. 
+
+
+test

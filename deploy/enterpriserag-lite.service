@@ -1,0 +1,23 @@
+[Unit]
+Description=EnterpriseRag Lite - Knowledge Base Management System
+After=network.target
+
+[Service]
+Type=simple
+User=enterpriserag
+Group=enterpriserag
+WorkingDirectory=/opt/enterpriserag
+EnvironmentFile=/opt/enterpriserag/.env.lite
+ExecStart=/opt/enterpriserag/enterpriserag-lite
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/enterpriserag/data
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,3168 @@
+<template>
+  <SettingsModalShell :visible="visible" :title="modalTitle" v-model="currentSection" :nav-groups="navGroups"
+    :overlay-class="isCreateMode ? 'organization-create-overlay' : ''"
+    :z-index="2000" @close="modalShell.requestClose">
+    <template #nav-icon="{ item, active }">
+      <img v-if="item.key === 'sharedAgents'" :src="active ? agentIconActiveSrc : agentIconSrc"
+        class="nav-icon nav-icon-img" alt="" aria-hidden="true" />
+      <t-icon v-else :name="item.icon" class="nav-icon" />
+    </template>
+    <div ref="contentWrapperRef" class="content-wrapper" :class="{ 'is-create': isCreateMode }">
+      <div v-if="showTenantRoleHint" class="tenant-role-hint">
+        <t-icon name="info-circle" size="16px" />
+        <span>{{ 'This action requires the admin role (or higher) in the current workspace. Please contact the workspace owner.' }}</span>
+      </div>
+      <div v-show="currentSection === 'basic'" class="section">
+        <div class="section-header">
+          <h2>{{ 'Basic Information' }}</h2>
+          <p class="section-description">{{ 'Set the shared space name and description for easy identification' }}</p>
+        </div>
+
+        <div class="settings-group">
+          <div class="setting-row">
+            <div class="setting-info">
+              <label>{{ 'Shared Space Name' }} <span class="required">*</span></label>
+              <p class="desc">{{ 'Use your team or project name for easy identification' }}</p>
+            </div>
+            <div class="setting-control">
+              <div class="name-input-wrapper">
+                <t-popup v-model="avatarPopoverVisible" trigger="click" placement="bottom-left"
+                  :disabled="!isAdmin" overlay-class-name="avatar-emoji-popover">
+                  <div class="avatar-trigger-wrap">
+                    <SpaceAvatar :name="formData.name || '?'" :avatar="formData.avatar" size="medium" />
+                    <span v-if="isAdmin" class="avatar-change-hint">{{ 'Shared Space Avatar' }}</span>
+                  </div>
+                  <template #content>
+                    <div class="avatar-popover-content" @click.stop>
+                      <p class="avatar-popover-title">{{ 'Choose an emoji as shared space avatar' }}</p>
+                      <div class="avatar-emoji-grid">
+                        <button v-for="emoji in avatarEmojiOptions" :key="emoji" type="button"
+                          class="avatar-emoji-btn"
+                          :class="{ 'is-selected': formData.avatar === 'emoji:' + emoji }"
+                          @click="selectAvatarEmoji(emoji)">
+                          {{ emoji }}
+                        </button>
+                      </div>
+                      <t-button v-if="formData.avatar" variant="text" size="small" class="avatar-clear-btn"
+                        @click="clearAvatarEmoji">
+                        {{ 'Clear' }}
+                      </t-button>
+                    </div>
+                  </template>
+                </t-popup>
+                <t-input v-model="formData.name" :placeholder="'Enter shared space name'"
+                  :disabled="!isAdmin" class="name-input" />
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <label>{{ 'Shared Space Description' }}</label>
+              <p class="desc">{{ 'Describe the purpose and goals of the shared space to help members understand it' }}</p>
+            </div>
+            <div class="setting-control">
+              <t-textarea v-model="formData.description"
+                :placeholder="'Enter shared space description (optional)'"
+                :autosize="{ minRows: 3, maxRows: 6 }" :maxlength="500" :disabled="!isAdmin" />
+            </div>
+          </div>
+
+          <div v-if="isAdmin && orgId" class="setting-row setting-row-vertical">
+            <div class="setting-info full-width">
+              <label>{{ 'Invite Members' }}</label>
+              <p class="desc">{{ 'Invite others to join the shared space via code or link' }}</p>
+            </div>
+            <div class="setting-control full-width">
+              <div class="invite-card">
+                <div class="invite-method">
+                  <div class="invite-method-header">
+                    <t-icon name="qrcode" class="invite-icon" />
+                    <span class="invite-method-title">{{ 'Invite Code' }}</span>
+                  </div>
+                  <div class="invite-code-box">
+                    <span class="invite-code-value">{{ inviteCode }}</span>
+                    <div class="invite-code-actions">
+                      <t-tooltip :content="'Copy'">
+                        <t-button variant="text" size="small" @click="copyInviteCode">
+                          <t-icon name="file-copy" />
+                        </t-button>
+                      </t-tooltip>
+                      <t-tooltip :content="'Refresh Invite Code'">
+                        <t-button variant="text" size="small" @click="refreshInviteCode"
+                          :loading="refreshingCode">
+                          <t-icon name="refresh" />
+                        </t-button>
+                      </t-tooltip>
+                    </div>
+                  </div>
+                  <p v-if="inviteCode" class="invite-remaining">{{ remainingValidityText }}</p>
+                </div>
+
+                <div class="invite-divider"></div>
+
+                <div class="invite-method">
+                  <div class="invite-method-header">
+                    <t-icon name="time" class="invite-icon" />
+                    <span class="invite-method-title">{{ 'Invite link validity'
+                    }}</span>
+                  </div>
+                  <p class="invite-validity-desc">{{ 'Validity period for newly generated invite links' }}</p>
+                  <t-select v-model="formData.invite_code_validity_days" :options="inviteValidityOptions"
+                    size="small" class="invite-validity-select" :disabled="!isAdmin"
+                    @change="handleValidityChange" />
+                </div>
+
+                <div class="invite-divider"></div>
+
+                <div class="invite-method">
+                  <div class="invite-method-header">
+                    <t-icon name="link" class="invite-icon" />
+                    <span class="invite-method-title">{{ 'Invite Link' }}</span>
+                  </div>
+                  <div class="invite-link-box">
+                    <span class="invite-link-value">{{ inviteLink }}</span>
+                    <t-tooltip :content="'Copy'">
+                      <t-button variant="text" size="small" @click="copyInviteLink">
+                        <t-icon name="file-copy" />
+                      </t-button>
+                    </t-tooltip>
+                  </div>
+                </div>
+
+                <div class="invite-divider"></div>
+
+                <div class="invite-method">
+                  <div class="invite-method-header">
+                    <t-icon name="check-circle" class="invite-icon" />
+                    <span class="invite-method-title">{{ 'Require Approval' }}</span>
+                  </div>
+                  <div class="approval-toggle">
+                    <t-switch v-model="formData.require_approval" @change="handleApprovalToggle" />
+                    <span class="approval-desc">{{ 'When enabled, new members need admin approval to join' }}</span>
+                  </div>
+                </div>
+
+                <div class="invite-divider"></div>
+
+                <div class="invite-method">
+                  <div class="invite-method-header">
+                    <t-icon name="search" class="invite-icon" />
+                    <span class="invite-method-title">{{ 'Open for search' }}</span>
+                  </div>
+                  <div class="approval-toggle">
+                    <t-switch v-model="formData.searchable" @change="handleSearchableToggle" />
+                    <span class="approval-desc">{{ 'When enabled, this shared space appears in the \u0022Join Shared Space\u0022 search list; others can search and request to join without an invite code' }}</span>
+                  </div>
+                </div>
+
+                <div class="invite-divider"></div>
+
+                <div class="invite-method">
+                  <div class="invite-method-header">
+                    <t-icon name="user-add" class="invite-icon" />
+                    <span class="invite-method-title">{{ 'Member limit' }}</span>
+                  </div>
+                  <p class="invite-validity-desc">{{ 'No new members can be added when the limit is reached; 0 means unlimited' }}</p>
+                  <div class="member-limit-input-row">
+                    <t-input-number v-model="formData.member_limit" :min="0" :max="10000"
+                      :placeholder="'0 = unlimited'" theme="normal"
+                      style="width: 140px;" />
+                    <span class="member-limit-hint">{{ `Current members: ${orgInfo?.member_count ?? 0}` }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+
+      <div v-if="isCreateMode" v-show="currentSection === 'permissions'" class="section">
+        <div class="section-header">
+          <h2>{{ 'Member Permissions' }}</h2>
+          <p class="section-description">{{ 'Understand the permission scope of different roles for knowledge bases and agents in the shared space' }}</p>
+        </div>
+
+        <div class="permission-comparison">
+          <table class="permission-table" :aria-label="'Member Permissions'">
+            <thead>
+              <tr>
+                <th scope="col">{{ 'Permission Feature' }}</th>
+                <th v-for="role in orgRoleMatrixOrder" :key="role" scope="col">
+                  {{ (ORGANIZATION_ROLE_LABELS[role] ?? '') }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="permission in orgRoleMatrix.admin" :key="permission.key">
+                <th scope="row">{{ (ORGANIZATION_EDITOR_LABELS[permission.key] ?? '') }}</th>
+                <td v-for="role in orgRoleMatrixOrder" :key="role">
+                  <span v-if="orgRoleMatrix[role].find(item => item.key === permission.key)?.has"
+                    class="permission-allowed" role="img" :aria-label="'Yes'" :title="'Yes'">
+                    <t-icon name="check" size="16px" />
+                  </span>
+                  <span v-else class="permission-unavailable" role="img" :aria-label="'No'" :title="'No'">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="info-notice">
+          <t-icon name="info-circle" />
+          <span>{{ 'As the shared space creator, you will automatically become an admin with full permissions.' }}</span>
+        </div>
+      </div>
+
+      <div v-show="currentSection === 'members'" class="section">
+        <div class="section-header">
+          <div class="section-header-row">
+            <div class="section-header-titlewrap">
+              <h2>{{ 'Manage Members' }}</h2>
+              <t-popup placement="bottom-start" trigger="hover"
+                overlay-class-name="wk-popover org-permissions-popup-overlay"
+                :overlay-inner-style="permissionsPopupInnerStyle">
+                <button type="button" class="permissions-trigger-btn"
+                  :aria-label="'Member Permissions'"
+                  :title="'View role permissions'">
+                  <t-icon name="info-circle" size="16px" />
+                </button>
+                <template #content>
+                  <div class="permissions-compact permissions-compact--popover">
+                    <div class="permissions-compact-header">
+                      <span class="permissions-compact-title">{{ 'Member Permissions' }}</span>
+                      <span class="permissions-compact-desc">{{ 'Understand the permission scope of different roles for knowledge bases and agents in the shared space' }}</span>
+                    </div>
+                    <div class="permissions-compact-grid">
+                      <div v-for="role in orgRoleMatrixOrder" :key="role"
+                        :class="['perm-role-block', role, { 'is-me': orgInfo?.my_role === role }]">
+                        <div class="perm-role-tag">
+                          <t-icon :name="orgRoleIcon(role)" size="12px" />
+                          <span>{{ (ORGANIZATION_ROLE_LABELS[role] ?? '') }}</span>
+                          <span v-if="orgInfo?.my_role === role" class="me-badge">{{ 'Me' }}</span>
+                        </div>
+                        <div class="perm-items">
+                          <span v-for="(perm, idx) in orgRoleMatrix[role]" :key="idx"
+                            :class="['perm-item', perm.has ? 'has' : 'no']">
+                            <t-icon :name="perm.has ? 'check' : 'close'" size="12px" />
+                            {{ (ORGANIZATION_EDITOR_LABELS[perm.key] ?? '') }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </t-popup>
+            </div>
+          </div>
+          <p class="section-description">{{ 'View and manage shared space members and their roles. Each member represents a workspace — all users in the same workspace share access to this shared space.' }}</p>
+        </div>
+
+        <div class="members-list-wrap">
+          <div class="members-list-header">
+            <div class="members-list-titlewrap">
+              <span class="members-list-title">{{ 'Shared space members' }}</span>
+              <span class="members-list-count-badge">{{ filteredMembers.length }}</span>
+            </div>
+            <div class="members-list-actions">
+              <div class="members-list-search">
+                <t-input v-model="memberSearchQuery" size="small"
+                  :placeholder="'Search members…'" clearable>
+                  <template #prefix-icon>
+                    <t-icon name="search" />
+                  </template>
+                </t-input>
+              </div>
+              <t-popup v-if="canRequestUpgrade" v-model="upgradePopupVisible" trigger="click"
+                placement="bottom-end" destroy-on-close overlay-class-name="org-upgrade-popup-overlay">
+                <t-button variant="outline" shape="square" size="small" class="members-list-upgrade-btn"
+                  :disabled="hasPendingUpgrade"
+                  :title="hasPendingUpgrade ? 'Pending review' : 'Request upgrade'"
+                  :aria-label="hasPendingUpgrade ? 'Pending review' : 'Request upgrade'">
+                  <template #icon><t-icon name="arrow-up" /></template>
+                </t-button>
+                <template #content>
+                  <div class="org-upgrade-popup-inner" @click.stop>
+                    <div class="member-invite-popup-title">{{ 'Request upgrade' }}</div>
+                    <p class="add-member-tip">{{ 'Your role updates after a space admin approves.' }}</p>
+
+                    <div class="upgrade-current-role-bar">
+                      <span class="upgrade-current-role-label">{{ 'Current Role' }}</span>
+                      <t-tag size="small" :theme="getRoleTheme(orgInfo?.my_role || 'viewer')" variant="light">
+                        {{ (ORGANIZATION_ROLE_LABELS[orgInfo?.my_role || 'viewer'] ?? '') }}
+                      </t-tag>
+                    </div>
+
+                    <div class="org-upgrade-fields">
+                      <div class="org-upgrade-field">
+                        <label class="org-upgrade-field-label">{{ 'Request Role' }}</label>
+                        <div class="upgrade-role-pills">
+                          <button v-for="opt in upgradeRoleOptions" :key="opt.value" type="button"
+                            :class="['upgrade-role-pill', { active: upgradeForm.requested_role === opt.value }]"
+                            @click="upgradeForm.requested_role = opt.value as 'editor' | 'admin'">
+                            {{ opt.label }}
+                          </button>
+                        </div>
+                      </div>
+                      <div class="org-upgrade-field org-upgrade-field--last">
+                        <label class="org-upgrade-field-label">{{ 'Reason (Optional)' }}</label>
+                        <t-textarea v-model="upgradeForm.message" size="medium"
+                          :placeholder="'Please briefly explain why you need higher permissions...'"
+                          :autosize="{ minRows: 2, maxRows: 4 }" :maxlength="500" />
+                      </div>
+                    </div>
+
+                    <div class="invite-popup-footer">
+                      <t-button variant="outline" :disabled="upgradeSubmitting"
+                        @click="upgradePopupVisible = false">
+                        {{ 'Cancel' }}
+                      </t-button>
+                      <t-button theme="primary" :loading="upgradeSubmitting" @click="handleSubmitUpgrade">
+                        {{ 'Submit Request' }}
+                      </t-button>
+                    </div>
+                  </div>
+                </template>
+              </t-popup>
+              <t-popup v-if="isAdmin" v-model="addMemberPopupVisible" trigger="click" placement="bottom-end"
+                destroy-on-close overlay-class-name="org-add-member-popup-overlay">
+                <t-button theme="primary" variant="outline" shape="square" size="small"
+                  class="members-list-add-btn" :title="'Add Member'"
+                  :aria-label="'Add Member'">
+                  <template #icon><t-icon name="user-add" /></template>
+                </t-button>
+                <template #content>
+                  <div class="member-invite-popup-inner" @click.stop>
+                    <div class="member-invite-popup-title">{{ 'Add Member' }}</div>
+                    <p class="add-member-tip">{{ 'Membership is at the workspace level: once a workspace joins, all of its users share access to this space. Results below are deduplicated by workspace.' }}</p>
+                    <t-form layout="vertical" class="member-invite-form">
+                      <t-form-item :label="'Workspace ID'">
+                        <div class="member-form-control">
+                          <t-select v-model="selectedTenantId"
+                            :placeholder="'Enter the exact workspace ID'" filterable
+                            :filter="() => true" :loading="tenantSearchLoading" @search="handleTenantSearch"
+                            clearable :options="tenantSearchOptions" />
+                          <p class="field-hint">{{ 'Look up an exact workspace ID, or share an invitation link.' }}</p>
+                        </div>
+                      </t-form-item>
+                      <t-form-item :label="'Assign Role'">
+                        <t-select v-model="addMemberRole" :options="addMemberRoleOptions"
+                          :placeholder="'Assign Role'" />
+                      </t-form-item>
+                    </t-form>
+                    <div class="invite-popup-footer">
+                      <t-button variant="outline" :disabled="addMemberSubmitting"
+                        @click="addMemberPopupVisible = false">
+                        {{ 'Cancel' }}
+                      </t-button>
+                      <t-button theme="primary" :loading="addMemberSubmitting"
+                        :disabled="selectedTenantId == null" @click="handleAddMember">
+                        {{ 'Add' }}
+                      </t-button>
+                    </div>
+                  </div>
+                </template>
+              </t-popup>
+            </div>
+          </div>
+
+          <div v-if="membersLoading && members.length === 0" class="loading-inline">
+            <t-loading size="small" />
+            <span>{{ 'Loading members…' }}</span>
+          </div>
+          <div v-else-if="filteredMembers.length === 0" class="empty-state">
+            <t-empty :description="memberSearchQuery.trim()
+              ? `No members matching \u0022${memberSearchQuery}\u0022`
+              : 'No members'" />
+          </div>
+          <div v-else class="data-table-shell members-table-shell">
+            <t-table row-key="id" :data="filteredMembers" :columns="memberColumns" size="medium" hover
+              stripe :loading="membersLoading">
+              <template #member="{ row }">
+                <div class="member-cell">
+                  <span class="member-name">
+                    {{ memberPrimaryLabel(row) }}
+                    <span v-if="isOwnerMember(row)" class="owner-tag">{{ 'Creator' }}</span>
+                    <span v-if="row.user_id === authStore.currentUserId" class="me-tag">{{ 'Me'
+                    }}</span>
+                  </span>
+                  <span v-if="memberSecondaryLabel(row)" class="member-email">{{ memberSecondaryLabel(row)
+                  }}</span>
+                </div>
+              </template>
+              <template #role="{ row }">
+                <div class="role-cell">
+                  <t-select v-if="isAdmin && !isOwnerMember(row)" :model-value="row.role"
+                    class="member-role-select" size="small" :options="roleOptions"
+                    @change="(val: string) => handleRoleChange(row, val)" />
+                  <t-tag v-else size="small" :theme="getRoleTheme(row.role)">
+                    {{ (ORGANIZATION_ROLE_LABELS[row.role] ?? '') }}
+                  </t-tag>
+                </div>
+              </template>
+              <template #joined_at="{ row }">{{ formatDate(row.joined_at) }}</template>
+              <template #actions="{ row }">
+                <t-popconfirm v-if="isAdmin && !isOwnerMember(row)"
+                  :content="`Are you sure you want to remove \u0022${memberPrimaryLabel(row)}\u0022?`"
+                  :confirm-btn="{ content: 'Confirm', theme: 'danger' }"
+                  :cancel-btn="{ content: 'Cancel' }" placement="left"
+                  @confirm="confirmRemoveMember(row)">
+                  <t-tooltip :content="'Remove Member'" placement="top">
+                    <t-button theme="danger" shape="square" variant="text" size="small" @click.stop>
+                      <template #icon><t-icon name="user-clear" /></template>
+                    </t-button>
+                  </t-tooltip>
+                </t-popconfirm>
+              </template>
+            </t-table>
+          </div>
+        </div>
+      </div>
+
+      <div v-show="currentSection === 'joinRequests'" class="section">
+        <div class="section-header">
+          <h2>{{ 'Join Requests' }}</h2>
+          <p class="section-description">{{ 'Review pending requests to join the shared space' }}</p>
+        </div>
+
+        <div class="members-list-wrap join-requests-wrap">
+          <div class="members-list-header">
+            <div class="members-list-titlewrap">
+              <span class="members-list-title">{{ 'Pending requests' }}</span>
+              <span class="members-list-count-badge">{{ filteredJoinRequests.length }}</span>
+            </div>
+            <div class="members-list-actions">
+              <div class="members-list-search">
+                <t-input v-model="joinRequestSearchQuery" size="small"
+                  :placeholder="'Search applicants…'" clearable>
+                  <template #prefix-icon>
+                    <t-icon name="search" />
+                  </template>
+                </t-input>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="joinRequestsLoading && joinRequests.length === 0" class="loading-inline">
+            <t-loading size="small" />
+            <span>{{ 'Loading requests…' }}</span>
+          </div>
+          <div v-else-if="filteredJoinRequests.length === 0" class="empty-state">
+            <t-empty :description="joinRequestSearchQuery.trim()
+              ? `No requests matching \u0022${joinRequestSearchQuery}\u0022`
+              : 'No pending requests'" />
+          </div>
+          <div v-else class="data-table-shell join-requests-table">
+            <t-table row-key="id" :data="filteredJoinRequests" :columns="joinRequestColumns" size="medium"
+              hover stripe :loading="joinRequestsLoading">
+              <template #applicant="{ row }">
+                <div class="member-cell">
+                  <span class="member-name">{{ joinRequestApplicantLabel(row) }}</span>
+                  <span v-if="joinRequestApplicantSecondary(row)" class="member-email">
+                    {{ joinRequestApplicantSecondary(row) }}
+                  </span>
+                </div>
+              </template>
+              <template #request_type="{ row }">
+                <t-tag size="small" :theme="row.request_type === 'upgrade' ? 'warning' : 'primary'"
+                  variant="light">
+                  {{ row.request_type === 'upgrade'
+                    ? 'Upgrade'
+                    : 'Join' }}
+                </t-tag>
+              </template>
+              <template #requested_role="{ row }">
+                <span v-if="row.request_type === 'upgrade' && row.prev_role" class="join-request-role-change">
+                  {{ roleLabel(row.prev_role) }}
+                  <t-icon name="arrow-right" size="12px" />
+                  {{ roleLabel(row.requested_role) }}
+                </span>
+                <t-tag v-else size="small" :theme="getRoleTheme(row.requested_role)" variant="light">
+                  {{ roleLabel(row.requested_role) }}
+                </t-tag>
+              </template>
+              <template #message="{ row }">
+                <span class="join-request-message" :title="row.message || undefined">
+                  {{ row.message || '—' }}
+                </span>
+              </template>
+              <template #created_at="{ row }">{{ formatDate(row.created_at) }}</template>
+              <template #actions="{ row }">
+                <div class="join-request-actions">
+                  <t-popup :visible="approvePopupRequestId === row.id"
+                    placement="left-start" destroy-on-close overlay-class-name="org-approve-request-popup-overlay"
+                    @visible-change="(visible: boolean) => handleApprovePopupVisibleChange(visible, row)">
+                    <t-tooltip :content="'Approve'" placement="top">
+                      <t-button theme="primary" variant="text" shape="square" size="small"
+                        :loading="reviewingRequestId === row.id" @click.stop="openApprovePopup(row)">
+                        <template #icon><t-icon name="check" /></template>
+                      </t-button>
+                    </t-tooltip>
+                    <template #content>
+                      <div class="org-approve-request-popup-inner" @click.stop>
+                        <div class="member-invite-popup-title">{{ 'Approve request' }}</div>
+                        <p class="add-member-tip">
+                          {{ `Assign a role for \u0022${joinRequestApplicantLabel(row)}\u0022 after approval` }}
+                        </p>
+                        <div class="org-upgrade-field org-upgrade-field--last">
+                          <label class="org-upgrade-field-label">{{ 'Assign role' }}</label>
+                          <t-select v-model="approveAssignRole" size="medium" :options="orgRoleOptions" />
+                        </div>
+                        <div class="invite-popup-footer">
+                          <t-button variant="outline" :disabled="reviewingRequestId === row.id"
+                            @click="closeApprovePopup">
+                            {{ 'Cancel' }}
+                          </t-button>
+                          <t-button theme="primary" :loading="reviewingRequestId === row.id"
+                            @click="confirmApproveRequest(row)">
+                            {{ 'Approve' }}
+                          </t-button>
+                        </div>
+                      </div>
+                    </template>
+                  </t-popup>
+                  <t-popconfirm :content="'Reject this request?'"
+                    :confirm-btn="{ content: 'Reject', theme: 'danger' }"
+                    :cancel-btn="{ content: 'Cancel' }" placement="left"
+                    @confirm="handleRejectRequest(row)">
+                    <t-tooltip :content="'Reject'" placement="top">
+                      <t-button theme="danger" variant="text" shape="square" size="small"
+                        :loading="reviewingRequestId === row.id" @click.stop>
+                        <template #icon><t-icon name="close" /></template>
+                      </t-button>
+                    </t-tooltip>
+                  </t-popconfirm>
+                </div>
+              </template>
+            </t-table>
+          </div>
+        </div>
+      </div>
+
+      <div v-show="currentSection === 'sharedKb'" class="section">
+        <div class="section-header">
+          <div class="section-header-row">
+            <div class="section-header-titlewrap">
+              <h2>{{ 'Shared Knowledge Base' }}</h2>
+              <t-popup placement="bottom-start" trigger="hover"
+                overlay-class-name="wk-popover org-permissions-popup-overlay"
+                :overlay-inner-style="permissionsHintPopupInnerStyle">
+                <button type="button" class="permissions-trigger-btn"
+                  :aria-label="'Shared space permission is set when sharing; effective permission is the lower of that and your shared space role'"
+                  :title="'Shared space permission is set when sharing; effective permission is the lower of that and your shared space role'">
+                  <t-icon name="info-circle" size="16px" />
+                </button>
+                <template #content>
+                  <div class="permission-hint-popover">
+                    <p class="permission-hint-title">{{ 'Shared space permission' }}</p>
+                    <p class="permission-hint-desc">{{ 'Effective permission is the lower of shared space permission and your role here; viewers get at most read-only on this KB.' }}</p>
+                  </div>
+                </template>
+              </t-popup>
+            </div>
+          </div>
+          <p class="section-description">{{ 'View all knowledge bases shared to this shared space' }}</p>
+        </div>
+
+        <div class="shared-resources-wrap">
+          <div class="members-list-header">
+            <div class="members-list-titlewrap">
+              <span class="members-list-title">{{ 'Shared knowledge bases' }}</span>
+              <span class="members-list-count-badge">{{ sharedKnowledgeBases.length }}</span>
+            </div>
+          </div>
+
+          <div v-if="sharesLoading && sharedKnowledgeBases.length === 0" class="loading-inline">
+            <t-loading size="small" />
+            <span>{{ 'Loading…' }}</span>
+          </div>
+          <div v-else-if="sharedKnowledgeBases.length === 0" class="empty-state">
+            <t-empty>
+              <template #description>
+                <p class="empty-state-title">{{ 'No shared knowledge bases yet' }}</p>
+                <p class="empty-state-desc">{{ 'Knowledge base owners can share their knowledge bases to this shared space in KB settings' }}</p>
+              </template>
+            </t-empty>
+          </div>
+          <div v-else class="data-table-shell shared-resources-table">
+            <t-table row-key="id" :data="sharedKnowledgeBases" :columns="sharedKbColumns" size="medium"
+              hover stripe :loading="sharesLoading" class="shared-kb-table">
+              <template #name="{ row }">
+                <span class="resource-name" :title="row.knowledge_base_name">{{ row.knowledge_base_name }}</span>
+              </template>
+              <template #shared_by="{ row }">
+                <span class="resource-meta">{{ row.shared_by_username || '—' }}</span>
+              </template>
+              <template #created_at="{ row }">{{ formatDate(row.created_at) }}</template>
+              <template #space_permission="{ row }">
+                <t-tag size="small" :theme="getPermissionTheme(row.permission)" variant="light">
+                  {{ sharePermissionLabel(row.permission) }}
+                </t-tag>
+              </template>
+              <template #my_permission="{ row }">
+                <t-tag size="small"
+                  :theme="getPermissionTheme(row.my_permission ?? row.permission)" variant="light">
+                  {{ sharePermissionLabel(row.my_permission ?? row.permission) }}
+                </t-tag>
+              </template>
+              <template #actions="{ row }">
+                <div class="resource-row-actions">
+                  <t-tooltip :content="'Go to Knowledge Base'" placement="top">
+                    <t-button theme="primary" shape="square" variant="text" size="small"
+                      :aria-label="'Go to Knowledge Base'"
+                      @click.stop="handleShareClick(row)">
+                      <template #icon><t-icon name="browse" /></template>
+                    </t-button>
+                  </t-tooltip>
+                  <t-popconfirm v-if="isAdmin"
+                  :content="`Remove \u0022${row.knowledge_base_name || row.knowledge_base_id}\u0022 from this shared space? Members will no longer have access to this knowledge base.`"
+                  :confirm-btn="{ content: 'Confirm', theme: 'danger' }"
+                  :cancel-btn="{ content: 'Cancel' }" placement="left"
+                  @confirm="handleRemoveShare(row)">
+                  <t-tooltip :content="'Remove from shared space'" placement="top">
+                    <t-button theme="danger" shape="square" variant="text" size="small" @click.stop>
+                      <template #icon><t-icon name="delete" /></template>
+                    </t-button>
+                  </t-tooltip>
+                </t-popconfirm>
+                </div>
+              </template>
+            </t-table>
+          </div>
+        </div>
+      </div>
+
+      <div v-show="currentSection === 'sharedAgents'" class="section">
+        <div class="section-header">
+          <div class="section-header-row">
+            <div class="section-header-titlewrap">
+              <h2>{{ 'Shared Agents' }}</h2>
+              <t-popup placement="bottom-start" trigger="hover"
+                overlay-class-name="wk-popover org-permissions-popup-overlay"
+                :overlay-inner-style="permissionsHintPopupInnerStyle">
+                <button type="button" class="permissions-trigger-btn"
+                  :aria-label="'Agent-linked knowledge is read-only in chat; share the KB to this space if members should see or edit it in the list.'"
+                  :title="'Agent-linked knowledge is read-only in chat; share the KB to this space if members should see or edit it in the list.'">
+                  <t-icon name="info-circle" size="16px" />
+                </button>
+                <template #content>
+                  <div class="permission-hint-popover">
+                    <p class="permission-hint-title">{{ 'Shared Agents' }}</p>
+                    <p class="permission-hint-desc">{{ 'Knowledge bases linked to an agent are only available (read-only) when members use that agent in a conversation (via {\'@\'}). They do not appear in the Knowledge Base list. To let members see or edit a knowledge base in the list, share that knowledge base to this shared space separately.' }}</p>
+                  </div>
+                </template>
+              </t-popup>
+            </div>
+          </div>
+          <p class="section-description">{{ 'Agents shared to this shared space; members can use them in chat' }}</p>
+        </div>
+
+        <div class="shared-resources-wrap">
+          <div class="members-list-header">
+            <div class="members-list-titlewrap">
+              <span class="members-list-title">{{ 'Shared agents' }}</span>
+              <span class="members-list-count-badge">{{ sharedAgents.length }}</span>
+            </div>
+          </div>
+
+          <div v-if="sharedAgents.length === 0" class="empty-state">
+            <t-empty>
+              <template #description>
+                <p class="empty-state-title">{{ 'No shared agents yet' }}</p>
+                <p class="empty-state-desc">{{ 'Admins can share agents to this shared space from agent settings' }}</p>
+              </template>
+            </t-empty>
+          </div>
+          <div v-else class="data-table-shell shared-resources-table">
+            <t-table row-key="id" :data="sharedAgents" :columns="sharedAgentColumns" size="medium" hover
+              stripe class="shared-agent-table">
+              <template #name="{ row }">
+                <span class="resource-name" :title="row.agent_name || row.agent_id">{{ row.agent_name ||
+                  row.agent_id }}</span>
+              </template>
+              <template #shared_by="{ row }">
+                <span class="resource-meta">{{ row.shared_by_username || '—' }}</span>
+              </template>
+              <template #created_at="{ row }">{{ formatDate(row.created_at) }}</template>
+              <template #scope_kb="{ row }">
+                <span class="resource-meta" :title="agentKbScopeLabel(row)">{{ agentKbScopeLabel(row) }}</span>
+              </template>
+              <template #scope_web_search="{ row }">
+                <span class="resource-meta">{{ agentWebSearchScopeLabel(row) }}</span>
+              </template>
+              <template #scope_mcp="{ row }">
+                <span class="resource-meta" :title="agentMcpScopeLabel(row)">{{ agentMcpScopeLabel(row) }}</span>
+              </template>
+              <template #permission>
+                <t-tag size="small" theme="default" variant="light">
+                  {{ 'Read-only' }}
+                </t-tag>
+              </template>
+              <template #actions="{ row }">
+                <t-popconfirm v-if="isAdmin"
+                  :content="`Remove \u0022${row.agent_name || row.agent_id}\u0022 from this shared space? Members will no longer have access to this agent.`"
+                  :confirm-btn="{ content: 'Confirm', theme: 'danger' }"
+                  :cancel-btn="{ content: 'Cancel' }" placement="left"
+                  @confirm="handleRemoveAgentShare(row)">
+                  <t-tooltip :content="'Remove from shared space'" placement="top">
+                    <t-button theme="danger" shape="square" variant="text" size="small" @click.stop>
+                      <template #icon><t-icon name="delete" /></template>
+                    </t-button>
+                  </t-tooltip>
+                </t-popconfirm>
+              </template>
+            </t-table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <template #footer>
+      <t-button variant="outline" @click="modalShell.requestClose">{{ 'Cancel' }}</t-button>
+      <t-button v-if="isAdmin" theme="primary" :loading="submitting" @click="handleSave">
+        {{ isCreateMode ? 'Create' : 'Save' }}
+      </t-button>
+    </template>
+  </SettingsModalShell>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
+import { MessagePlugin } from 'tdesign-vue-next'
+import { useModalShell } from '@/composables/useModalShell'
+import SettingsModalShell from '@/components/SettingsModalShell.vue'
+import { copyWithToast } from '@/utils/clipboard'
+import {
+  getOrganization,
+  listOrgShares,
+  listOrgAgentShares,
+  listJoinRequests,
+  searchTenantsForInvite,
+  type OrganizationMember,
+  type KnowledgeBaseShare,
+  type AgentShareResponse,
+  type JoinRequestResponse,
+  type TenantInviteCandidate
+} from '@/api/organization'
+import { useOrganizationStore } from '@/stores/organization'
+import { useAuthStore } from '@/stores/auth'
+import SpaceAvatar from '@/components/SpaceAvatar.vue'
+import agentIconSrc from '@/assets/img/agent.svg'
+import agentIconActiveSrc from '@/assets/img/agent-green.svg'
+
+const ORGANIZATION_ROLE_LABELS: Record<string, string> = {
+  admin: 'Admin',
+  editor: 'Editor',
+  viewer: 'Viewer',
+}
+
+const ORGANIZATION_EDITOR_LABELS: Record<string, string> = {
+  navBasic: 'Basic Info',
+  navPermissions: 'Permissions',
+  navJoin: 'Join Shared Space',
+  basicTitle: 'Basic Information',
+  basicDesc: 'Set the shared space name and description for easy identification',
+  nameTip: 'Use your team or project name for easy identification',
+  descriptionTip: 'Describe the purpose and goals of the shared space to help members understand it',
+  permissionsTitle: 'Member Permissions',
+  permissionsDesc: 'Understand the permission scope of different roles for knowledge bases and agents in the shared space',
+  permissionFeature: 'Permission Feature',
+  fullAccess: 'Full Access',
+  editAccess: 'Edit Access',
+  viewAccess: 'View Only',
+  adminPerm1: 'Manage shared space settings, members, and knowledge base & agent sharing',
+  adminPerm2: 'Share and manage knowledge bases and agents',
+  adminPerm3: 'Edit shared knowledge base content',
+  adminPerm4: 'View and search knowledge bases',
+  useSharedAgentsPerm: 'Use shared agents',
+  shareKBPerm: 'Share knowledge bases to shared space',
+  editorPerm1: 'Edit shared knowledge base content',
+  editorPerm2: 'View and search knowledge bases',
+  editorPerm3: 'Manage shared space settings and members',
+  viewerPerm1: 'View and search knowledge bases',
+  viewerPerm2: 'Edit knowledge base content',
+  viewerPerm3: 'Manage shared space settings',
+  ownerNote: 'As the shared space creator, you will automatically become an admin with full permissions.',
+  joinTitle: 'Join Shared Space',
+  joinDesc: 'Join an existing shared space with an invite code to access shared knowledge bases and agents',
+  joinIllustration: 'Enter the invite code provided by the shared space admin to join',
+  inviteCodeTip: 'The invite code is generated by shared space admins, please ask them for it',
+  howToGetCode: 'How to get an invite code?',
+  step1: 'Contact the admin of the shared space you want to join',
+  step2: 'Ask them to share the shared space invite code',
+  step3: 'Paste the invite code in the input field above',
+}
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+const orgStore = useOrganizationStore()
+
+interface Props {
+  visible: boolean
+  orgId?: string
+  mode?: 'view' | 'edit' | 'create'
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  mode: 'view'
+})
+
+const emit = defineEmits<{
+  (e: 'update:visible', value: boolean): void
+  (e: 'saved'): void
+}>()
+
+// State
+const currentSection = ref('basic')
+const contentWrapperRef = ref<HTMLElement | null>(null)
+const orgInfo = computed(() => orgStore.currentOrganization)
+const members = computed(() => orgStore.currentMembers)
+const sharedKnowledgeBases = ref<KnowledgeBaseShare[]>([])
+const sharedAgents = ref<AgentShareResponse[]>([])
+const joinRequests = ref<JoinRequestResponse[]>([])
+const joinRequestsLoading = ref(false)
+const joinRequestSearchQuery = ref('')
+const reviewingRequestId = ref<string | null>(null)
+const sharesLoading = ref(false)
+const membersLoading = ref(false)
+const memberSearchQuery = ref('')
+const submitting = ref(false)
+const refreshingCode = ref(false)
+const inviteCode = ref('')
+const inviteCodeExpiresAt = ref<string | null>(null)
+const upgradePopupVisible = ref(false)
+const upgradeSubmitting = ref(false)
+const hasPendingUpgrade = ref(false)
+const upgradeForm = ref({
+  requested_role: 'editor' as 'admin' | 'editor' | 'viewer',
+  message: ''
+})
+
+// State for adding a member (invite by workspace). An invite pulls a whole
+// workspace into the space; each search result is a candidate workspace carrying a
+// representative user for display. `selectedTenantId` is the tenant_id sent to the backend.
+const addMemberPopupVisible = ref(false)
+const addMemberSubmitting = ref(false)
+const tenantSearchLoading = ref(false)
+const tenantSearchResults = ref<TenantInviteCandidate[]>([])
+const selectedTenantId = ref<number | null>(null)
+const addMemberRole = ref<'admin' | 'editor' | 'viewer'>('viewer')
+
+const formData = ref({
+  name: '',
+  description: '',
+  avatar: '' as string,
+  require_approval: false,
+  searchable: false,
+  invite_code_validity_days: 7 as number,
+  member_limit: 50 as number // 0 = unlimited
+})
+
+const avatarEmojiOptions = [
+  '🚀', '📁', '👥', '🏢', '💡', '📚', '🌟', '🔧', '📌', '🎯',
+  '📂', '🔒', '🌐', '⚡', '🎨', '📊', '🤝', '💼', '📧', '🏠',
+  '🔑', '📈', '✨', '📋', '🌍', '💬', '🔔', '📦', '🎉', '🌈'
+]
+const avatarPopoverVisible = ref(false)
+
+function selectAvatarEmoji(emoji: string) {
+  formData.value.avatar = 'emoji:' + emoji
+  avatarPopoverVisible.value = false
+}
+function clearAvatarEmoji() {
+  formData.value.avatar = ''
+  avatarPopoverVisible.value = false
+}
+
+// Computed
+const isCreateMode = computed(() => props.mode === 'create')
+// Every organization mutation endpoint (save settings, invite, search users,
+// change/remove members, review join requests, upgrade requests, refresh the invite
+// code, remove shares) requires admin in the current workspace at the route layer
+// (see RegisterOrganizationRoutes in internal/router/router.go); cross-workspace
+// superusers bypass it. So every management entry point in the UI must satisfy both:
+// admin/owner in the organization AND admin+ in the current workspace.
+const hasTenantAdmin = computed(
+  () => authStore.hasRole('admin') || authStore.canAccessAllTenants
+)
+const isAdmin = computed(() => {
+  if (isCreateMode.value) return hasTenantAdmin.value
+  const orgAdmin = orgInfo.value?.my_role === 'admin' || orgInfo.value?.is_owner
+  return !!orgAdmin && hasTenantAdmin.value
+})
+
+const showTenantRoleHint = computed(() => {
+  if (isCreateMode.value) return !hasTenantAdmin.value
+  const orgAdmin = orgInfo.value?.my_role === 'admin' || orgInfo.value?.is_owner
+  return !!orgAdmin && !hasTenantAdmin.value
+})
+
+const canRequestUpgrade = computed(() => {
+  if (isCreateMode.value || !props.orgId) return false
+  const myRole = orgInfo.value?.my_role
+  if (!myRole || myRole === 'admin') return false
+  return hasTenantAdmin.value
+})
+
+const upgradeRoleOptions = computed(() => {
+  const myRole = orgInfo.value?.my_role || 'viewer'
+  const options = []
+  if (myRole === 'viewer') {
+    options.push({ label: 'Editor', value: 'editor' })
+    options.push({ label: 'Admin', value: 'admin' })
+  } else if (myRole === 'editor') {
+    options.push({ label: 'Admin', value: 'admin' })
+  }
+  return options
+})
+
+const addMemberRoleOptions = computed(() => [
+  { label: 'Viewer', value: 'viewer' },
+  { label: 'Editor', value: 'editor' },
+  { label: 'Admin', value: 'admin' },
+])
+
+const tenantSearchOptions = computed(() =>
+  tenantSearchResults.value.map((c) => ({
+    label: c.tenant_name || `tenant#${c.tenant_id}`,
+    value: c.tenant_id,
+  }))
+)
+
+const modalTitle = computed(() => {
+  if (isCreateMode.value) return 'Create Shared Space'
+  return 'Shared Space Settings'
+})
+
+const navItems = computed(() => {
+  const items: { key: string; icon: string; label: string; badge?: number; badgeClass?: string; showZeroBadge?: boolean }[] = [
+    { key: 'basic', icon: 'info-circle', label: 'Basic Info' },
+  ]
+  if (isCreateMode.value) {
+    items.push({ key: 'permissions', icon: 'user-safety', label: 'Permissions' })
+  }
+  if (props.orgId && !isCreateMode.value) {
+    items.push({ key: 'members', icon: 'user', label: 'Manage Members' })
+    if (isAdmin.value) {
+      const pendingCount = orgInfo.value?.pending_join_request_count ?? 0
+      items.push({
+        key: 'joinRequests',
+        icon: 'user-add',
+        label: 'Join Requests',
+        badge: pendingCount > 0 ? pendingCount : undefined
+      })
+    }
+    items.push({
+      key: 'sharedKb',
+      badgeClass: 'nav-badge-count',
+      showZeroBadge: true,
+      icon: 'folder-open',
+      label: 'Shared Knowledge Base',
+      badge: sharedKnowledgeBases.value.length
+    })
+    items.push({
+      key: 'sharedAgents',
+      badgeClass: 'nav-badge-count',
+      showZeroBadge: true,
+      icon: 'control-platform',
+      label: 'Shared Agents',
+      badge: sharedAgents.value.length
+    })
+  }
+  return items
+})
+
+const navGroups = computed(() => {
+  const itemMap = new Map(navItems.value.map((item) => [item.key, item]))
+  const pickItems = (keys: string[]) =>
+    keys.map((key) => itemMap.get(key)).filter(Boolean) as typeof navItems.value
+  if (isCreateMode.value) {
+    return [
+      {
+        key: 'basic',
+        label: 'Basic',
+        items: pickItems(['basic', 'permissions']),
+      },
+    ].filter((group) => group.items.length > 0)
+  }
+  return [
+    {
+      key: 'basic',
+      label: 'Basic',
+      items: pickItems(['basic']),
+    },
+    {
+      key: 'management',
+      label: 'Members & Collaboration',
+      items: pickItems(['members', 'joinRequests']),
+    },
+    {
+      key: 'resources',
+      label: 'Shared Resources',
+      items: pickItems(['sharedKb', 'sharedAgents']),
+    },
+  ].filter((group) => group.items.length > 0)
+})
+
+const roleOptions = computed(() => [
+  { label: 'Admin', value: 'admin' },
+  { label: 'Editor', value: 'editor' },
+  { label: 'Viewer', value: 'viewer' }
+])
+
+const permissionsPopupInnerStyle = {
+  boxSizing: 'border-box' as const,
+  padding: '0',
+  width: 'min(520px, calc(100vw - 24px))',
+  maxWidth: 'min(520px, calc(100vw - 24px))',
+  maxHeight: 'min(400px, 65vh)',
+  overflow: 'hidden',
+}
+
+const permissionsHintPopupInnerStyle = {
+  boxSizing: 'border-box' as const,
+  padding: '0',
+  width: 'min(400px, calc(100vw - 24px))',
+  maxWidth: 'min(400px, calc(100vw - 24px))',
+  maxHeight: 'min(280px, 65vh)',
+  overflow: 'hidden',
+}
+
+type OrgRole = 'admin' | 'editor' | 'viewer'
+type OrgRolePerm = { key: string; has: boolean }
+
+const orgRoleMatrixOrder: OrgRole[] = ['admin', 'editor', 'viewer']
+
+const orgRoleMatrix: Record<OrgRole, OrgRolePerm[]> = {
+  admin: [
+    { key: 'viewerPerm1', has: true },
+    { key: 'editorPerm1', has: true },
+    { key: 'useSharedAgentsPerm', has: true },
+    { key: 'shareKBPerm', has: true },
+    { key: 'adminPerm1', has: true },
+  ],
+  editor: [
+    { key: 'viewerPerm1', has: true },
+    { key: 'editorPerm1', has: true },
+    { key: 'useSharedAgentsPerm', has: true },
+    { key: 'shareKBPerm', has: true },
+    { key: 'adminPerm1', has: false },
+  ],
+  viewer: [
+    { key: 'viewerPerm1', has: true },
+    { key: 'editorPerm1', has: false },
+    { key: 'useSharedAgentsPerm', has: true },
+    { key: 'shareKBPerm', has: false },
+    { key: 'adminPerm1', has: false },
+  ],
+}
+
+function orgRoleIcon(role: OrgRole): string {
+  switch (role) {
+    case 'admin':
+      return 'user-safety'
+    case 'editor':
+      return 'edit'
+    default:
+      return 'browse'
+  }
+}
+
+const memberColumns = computed(() => {
+  const cols = [
+    { colKey: 'member', title: 'Member', ellipsis: true, minWidth: 160 },
+    { colKey: 'role', title: 'Role', width: 132 },
+    { colKey: 'joined_at', title: 'Joined', width: 154 },
+  ]
+  if (isAdmin.value) {
+    cols.push({ colKey: 'actions', title: 'Actions', width: 88, align: 'left' } as typeof cols[number])
+  }
+  return cols
+})
+
+function sharePermissionLabel(permission: string): string {
+  if (permission === 'editor' || permission === 'admin') {
+    return 'Editable'
+  }
+  return 'Read-only'
+}
+
+const joinRequestColumns = computed(() => {
+  const cols = [
+    { colKey: 'applicant', title: 'Applicant', ellipsis: true, minWidth: 160 },
+    { colKey: 'request_type', title: 'Type', width: 88 },
+    { colKey: 'requested_role', title: 'Requested role', width: 140 },
+    { colKey: 'message', title: 'Note', ellipsis: true, minWidth: 120 },
+    { colKey: 'created_at', title: 'Applied', width: 154 },
+    { colKey: 'actions', title: 'Actions', width: 88, align: 'left' },
+  ]
+  return cols
+})
+
+const sharedKbColumns = computed(() => {
+  const cols = [
+    { colKey: 'name', title: 'Name', ellipsis: true, minWidth: 180 },
+    { colKey: 'shared_by', title: 'Shared by', width: 120, ellipsis: true },
+    { colKey: 'created_at', title: 'Shared at', width: 154 },
+    { colKey: 'space_permission', title: 'Shared space permission', width: 108 },
+    { colKey: 'my_permission', title: 'Effective', width: 96 },
+    {
+      colKey: 'actions',
+      title: 'Actions',
+      width: isAdmin.value ? 96 : 64,
+      align: 'left',
+    },
+  ]
+  return cols
+})
+
+const sharedAgentColumns = computed(() => {
+  const cols = [
+    { colKey: 'name', title: 'Name', ellipsis: true, minWidth: 160 },
+    { colKey: 'shared_by', title: 'Shared by', width: 108, ellipsis: true },
+    { colKey: 'created_at', title: 'Shared at', width: 118 },
+    { colKey: 'scope_kb', title: 'Knowledge bases', width: 120, ellipsis: true },
+    { colKey: 'scope_web_search', title: 'Web search', width: 88, ellipsis: true },
+    { colKey: 'scope_mcp', title: 'MCP services', width: 108, ellipsis: true },
+    { colKey: 'permission', title: 'Permission', width: 80 },
+  ]
+  if (isAdmin.value) {
+    cols.push({ colKey: 'actions', title: 'Actions', width: 72, align: 'left' } as typeof cols[number])
+  }
+  return cols
+})
+
+function agentKbScopeLabel(share: AgentShareResponse): string {
+  if (share.scope_kb === undefined || share.scope_kb === '') return '—'
+  if (share.scope_kb === 'all') return 'All knowledge bases'
+  if (share.scope_kb === 'selected' && (share.scope_kb_count ?? 0) > 0) {
+    return `${share.scope_kb_count} selected`
+  }
+  return 'None'
+}
+
+function agentWebSearchScopeLabel(share: AgentShareResponse): string {
+  if (share.scope_web_search === undefined) return '—'
+  return share.scope_web_search ? 'On' : 'Off'
+}
+
+function agentMcpScopeLabel(share: AgentShareResponse): string {
+  if (share.scope_mcp === undefined || share.scope_mcp === '') return '—'
+  if (share.scope_mcp === 'all') return 'All services'
+  if (share.scope_mcp === 'selected' && (share.scope_mcp_count ?? 0) > 0) {
+    return `${share.scope_mcp_count} selected`
+  }
+  return 'None'
+}
+
+const filteredMembers = computed(() => {
+  const query = memberSearchQuery.value.toLowerCase()
+  if (!query) return members.value
+  return members.value.filter((m) =>
+    (m.tenant_name || '').toLowerCase().includes(query) ||
+    (m.username || '').toLowerCase().includes(query) ||
+    (m.email || '').toLowerCase().includes(query)
+  )
+})
+
+const filteredJoinRequests = computed(() => {
+  const query = joinRequestSearchQuery.value.trim().toLowerCase()
+  if (!query) return joinRequests.value
+  return joinRequests.value.filter((req) => {
+    const haystack = [req.username, req.email, req.user_id, req.message]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+    return haystack.includes(query)
+  })
+})
+
+function joinRequestApplicantLabel(req: JoinRequestResponse): string {
+  return req.username || req.email || req.user_id
+}
+
+function joinRequestApplicantSecondary(req: JoinRequestResponse): string {
+  const primary = joinRequestApplicantLabel(req)
+  if (req.email && req.email !== primary) return req.email
+  return ''
+}
+
+// Primary label of a member row: prefer the workspace name, falling back to the
+// representative user name / workspace ID. Every member row maps to a workspace, so
+// the UI must show the workspace identity first, otherwise it reads as if individual
+// people had been added.
+const memberPrimaryLabel = (m: OrganizationMember): string => {
+  return m.tenant_name || m.username || `tenant#${m.tenant_id}`
+}
+
+// Secondary label: shows the representative user name when the primary label is the
+// workspace name, and stays empty when the primary label already fell back to the user
+// name, to avoid repeating it. Email is not shown, it is of no use in this list.
+const memberSecondaryLabel = (m: OrganizationMember): string => {
+  if (m.tenant_name && m.username) {
+    return m.username
+  }
+  return ''
+}
+
+// Owner identification is tenant-keyed after Plan 3 (#1303): the org's
+// pinned owner_tenant_id (migration 000046) is the authority on which
+// row in the per-tenant members list represents the owner. Falling
+// back to owner_id (user-id) only matters for legacy rows where
+// owner_tenant_id wasn't backfilled — in that case the old per-user
+// rule is still better than nothing.
+const isOwnerMember = (member: OrganizationMember): boolean => {
+  const ownerTenantID = orgInfo.value?.owner_tenant_id
+  if (ownerTenantID && ownerTenantID > 0) {
+    return member.tenant_id === ownerTenantID
+  }
+  return member.user_id === orgInfo.value?.owner_id
+}
+
+const inviteLink = computed(() => {
+  if (!inviteCode.value) return ''
+  return `${window.location.origin}/join?code=${inviteCode.value}`
+})
+
+const inviteValidityOptions = computed(() => [
+  { label: '1 day', value: 1 },
+  { label: '7 days', value: 7 },
+  { label: '30 days', value: 30 },
+  { label: 'Never expire', value: 0 }
+])
+
+const remainingValidityText = computed(() => {
+  const at = inviteCodeExpiresAt.value
+  if (!at) return 'Never expire'
+  const exp = new Date(at)
+  const now = new Date()
+  if (exp.getTime() <= now.getTime()) return 'Expired'
+  const days = Math.ceil((exp.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+  return `Expires in ${days} days`
+})
+
+// Methods
+const handleClose = () => {
+  // Blur before unmount so TDesign textarea autosize won't run on a detached node.
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur()
+  }
+  emit('update:visible', false)
+}
+
+const modalShell = useModalShell({
+  visible: () => props.visible,
+  close: handleClose,
+  snapshot: () => formData.value,
+})
+
+const fetchOrgDetail = async () => {
+  if (!props.orgId) return
+  try {
+    const res = await getOrganization(props.orgId)
+    if (!props.visible) return
+    if (res.success && res.data) {
+      orgStore.setCurrentOrganization(res.data)
+      const validity = res.data.invite_code_validity_days
+      const memberLimit = res.data.member_limit
+      formData.value = {
+        name: res.data.name,
+        description: res.data.description || '',
+        avatar: res.data.avatar || '',
+        require_approval: res.data.require_approval || false,
+        searchable: res.data.searchable || false,
+        invite_code_validity_days: typeof validity === 'number' ? validity : 7,
+        member_limit: typeof memberLimit === 'number' && memberLimit >= 0 ? memberLimit : 50
+      }
+      inviteCode.value = res.data.invite_code || ''
+      inviteCodeExpiresAt.value = res.data.invite_code_expires_at ?? null
+      modalShell.markClean()
+      hasPendingUpgrade.value = res.data.has_pending_upgrade || false
+    }
+  } catch (error) {
+    console.error('Failed to fetch org:', error)
+  }
+}
+
+const fetchMembers = async () => {
+  if (!props.orgId) return
+  membersLoading.value = true
+  try {
+    await orgStore.fetchMembers(props.orgId)
+  } catch (error) {
+    console.error('Failed to fetch members:', error)
+  } finally {
+    membersLoading.value = false
+  }
+}
+
+const fetchSharedKBs = async () => {
+  if (!props.orgId) return
+  sharesLoading.value = true
+  try {
+    const [kbRes, agentRes] = await Promise.all([
+      listOrgShares(props.orgId),
+      listOrgAgentShares(props.orgId)
+    ])
+    if (kbRes.success && kbRes.data) {
+      sharedKnowledgeBases.value = kbRes.data.shares || []
+    } else {
+      sharedKnowledgeBases.value = []
+    }
+    if (agentRes.success && agentRes.data) {
+      sharedAgents.value = agentRes.data.shares || []
+    } else {
+      sharedAgents.value = []
+    }
+  } catch (error) {
+    console.error('Failed to fetch shared resources:', error)
+    sharedKnowledgeBases.value = []
+    sharedAgents.value = []
+  } finally {
+    sharesLoading.value = false
+  }
+}
+
+const orgRoleOptions = [
+  { label: 'Viewer', value: 'viewer' },
+  { label: 'Editor', value: 'editor' },
+  { label: 'Admin', value: 'admin' },
+]
+const approvePopupRequestId = ref<string | null>(null)
+const approveAssignRole = ref<'viewer' | 'editor' | 'admin'>('viewer')
+
+function normalizeJoinRequestRole(role: string): 'viewer' | 'editor' | 'admin' {
+  if (role === 'admin' || role === 'editor' || role === 'viewer') return role
+  return 'viewer'
+}
+
+function openApprovePopup(req: JoinRequestResponse) {
+  approvePopupRequestId.value = req.id
+  approveAssignRole.value = normalizeJoinRequestRole(req.requested_role)
+}
+
+function closeApprovePopup() {
+  approvePopupRequestId.value = null
+}
+
+function handleApprovePopupVisibleChange(visible: boolean, req: JoinRequestResponse) {
+  if (visible) {
+    openApprovePopup(req)
+    return
+  }
+  if (approvePopupRequestId.value === req.id) {
+    closeApprovePopup()
+  }
+}
+
+function roleLabel(role: string) {
+  if (role === 'admin') return 'Admin'
+  if (role === 'editor') return 'Editor'
+  return 'Viewer'
+}
+
+const fetchJoinRequests = async () => {
+  if (!props.orgId) return
+  joinRequestsLoading.value = true
+  try {
+    const res = await listJoinRequests(props.orgId)
+    if (res.success && res.data) {
+      joinRequests.value = res.data.requests || []
+    } else {
+      joinRequests.value = []
+    }
+  } catch (error) {
+    console.error('Failed to fetch join requests:', error)
+    joinRequests.value = []
+  } finally {
+    joinRequestsLoading.value = false
+  }
+}
+
+/**
+ * Review results affect the settings modal, the space card and the pending count in
+ * the global sidebar. The latter two read the organization store, so the list cache
+ * must be bypassed and the counts re-synced.
+ */
+const refreshOrganizationAfterReview = async () => {
+  await Promise.all([
+    fetchOrgDetail(),
+    fetchMembers()
+  ])
+}
+
+const confirmApproveRequest = async (req: JoinRequestResponse) => {
+  const success = await handleApproveRequest(req, approveAssignRole.value)
+  if (success) closeApprovePopup()
+}
+
+const handleApproveRequest = async (req: JoinRequestResponse, assignRole: 'viewer' | 'editor' | 'admin'): Promise<boolean> => {
+  if (!props.orgId) return false
+  reviewingRequestId.value = req.id
+  try {
+    const res = await orgStore.reviewOrganizationJoinRequest(
+      props.orgId,
+      req.id,
+      { approved: true, role: assignRole },
+      { requestType: req.request_type }
+    )
+    if (res.success) {
+      MessagePlugin.success('Request approved')
+      joinRequests.value = joinRequests.value.filter(r => r.id !== req.id)
+      await refreshOrganizationAfterReview()
+      return true
+    }
+    MessagePlugin.error(res.message || 'Operation failed, please try again')
+    return false
+  } catch (error: any) {
+    MessagePlugin.error(error?.message || 'Operation failed, please try again')
+    return false
+  } finally {
+    reviewingRequestId.value = null
+  }
+}
+
+const handleRejectRequest = async (req: JoinRequestResponse) => {
+  if (!props.orgId) return
+  reviewingRequestId.value = req.id
+  try {
+    const res = await orgStore.reviewOrganizationJoinRequest(
+      props.orgId,
+      req.id,
+      { approved: false },
+      { requestType: req.request_type }
+    )
+    if (res.success) {
+      MessagePlugin.success('Request rejected')
+      joinRequests.value = joinRequests.value.filter(r => r.id !== req.id)
+      await refreshOrganizationAfterReview()
+    } else {
+      MessagePlugin.error(res.message || 'Operation failed, please try again')
+    }
+  } catch (error: any) {
+    MessagePlugin.error(error?.message || 'Operation failed, please try again')
+  } finally {
+    reviewingRequestId.value = null
+  }
+}
+
+const handleSave = async () => {
+  if (!formData.value.name.trim()) {
+    MessagePlugin.warning('Please enter shared space name')
+    currentSection.value = 'basic'
+    return
+  }
+
+  submitting.value = true
+  try {
+    if (isCreateMode.value) {
+      const result = await orgStore.create(
+        formData.value.name.trim(),
+        formData.value.description.trim(),
+        formData.value.avatar || undefined
+      )
+      if (result) {
+        MessagePlugin.success('Shared space created successfully')
+        emit('saved')
+        handleClose()
+      } else {
+        MessagePlugin.error(orgStore.error || 'Failed to create shared space')
+      }
+    } else {
+      if (!props.orgId) return
+      const result = await orgStore.updateOrganization(props.orgId, {
+        name: formData.value.name.trim(),
+        description: formData.value.description.trim(),
+        avatar: formData.value.avatar || undefined,
+        require_approval: formData.value.require_approval,
+        searchable: formData.value.searchable,
+        invite_code_validity_days: formData.value.invite_code_validity_days,
+        member_limit: formData.value.member_limit
+      })
+      if (result) {
+        MessagePlugin.success('Saved successfully')
+        emit('saved')
+        handleClose()
+      } else {
+        MessagePlugin.error(orgStore.error || 'Save failed')
+      }
+    }
+  } catch (error: any) {
+    MessagePlugin.error(error?.message || 'Save failed')
+  } finally {
+    submitting.value = false
+  }
+}
+
+const handleRoleChange = async (member: OrganizationMember, newRole: string) => {
+  if (!props.orgId) return
+  try {
+    const success = await orgStore.changeMemberRole(
+      props.orgId,
+      member.tenant_id,
+      newRole as 'admin' | 'editor' | 'viewer'
+    )
+    if (success) {
+      MessagePlugin.success('Role updated')
+    } else {
+      MessagePlugin.error(orgStore.error || 'Failed to update role')
+      fetchMembers()
+    }
+  } catch (error: any) {
+    MessagePlugin.error(error?.message || 'Failed to update role')
+    fetchMembers()
+  }
+}
+
+const confirmRemoveMember = async (member: OrganizationMember) => {
+  if (!props.orgId) return
+
+  try {
+    const success = await orgStore.kickMember(props.orgId, member.tenant_id)
+    if (success) {
+      MessagePlugin.success('Member removed')
+    } else {
+      MessagePlugin.error(orgStore.error || 'Failed to remove member')
+    }
+  } catch (error: any) {
+    MessagePlugin.error(error?.message || 'Failed to remove member')
+  }
+}
+
+watch(upgradePopupVisible, (visible) => {
+  if (!visible) return
+  upgradeForm.value = {
+    requested_role: (upgradeRoleOptions.value[0]?.value as 'editor' | 'admin') || 'editor',
+    message: '',
+  }
+})
+
+const handleSubmitUpgrade = async () => {
+  if (!props.orgId) return
+
+  upgradeSubmitting.value = true
+  try {
+    const res = await orgStore.requestOrganizationRoleUpgrade(props.orgId, {
+      requested_role: upgradeForm.value.requested_role,
+      message: upgradeForm.value.message
+    })
+    if (res.success) {
+      MessagePlugin.success('Upgrade request submitted, waiting for admin approval')
+      hasPendingUpgrade.value = true
+      upgradePopupVisible.value = false
+    } else {
+      MessagePlugin.error(res.message || 'Failed to submit request')
+    }
+  } catch (error: any) {
+    MessagePlugin.error(error?.message || 'Failed to submit request')
+  } finally {
+    upgradeSubmitting.value = false
+  }
+}
+
+let tenantSearchTimer: ReturnType<typeof setTimeout> | null = null
+const handleTenantSearch = (query: string) => {
+  if (tenantSearchTimer) {
+    clearTimeout(tenantSearchTimer)
+  }
+  const workspaceID = query.trim()
+  if (!/^[1-9]\d*$/.test(workspaceID)) {
+    tenantSearchResults.value = []
+    return
+  }
+  tenantSearchTimer = setTimeout(async () => {
+    if (!props.orgId) return
+    tenantSearchLoading.value = true
+    try {
+      const res = await searchTenantsForInvite(props.orgId, workspaceID, 10)
+      if (res.success && res.data) {
+        tenantSearchResults.value = res.data
+      }
+    } catch (error) {
+      console.error('Failed to search tenants:', error)
+    } finally {
+      tenantSearchLoading.value = false
+    }
+  }, 300)
+}
+
+// Add member: pull the selected workspace into the space. The backend requires
+// tenant_id; representative_user_id is display/audit only, so the representative user
+// from the search result is sent along.
+const handleAddMember = async () => {
+  if (!props.orgId || selectedTenantId.value == null) return
+
+  const candidate = tenantSearchResults.value.find(
+    (c) => c.tenant_id === selectedTenantId.value
+  )
+
+  addMemberSubmitting.value = true
+  try {
+    const res = await orgStore.inviteOrganizationMember(props.orgId, {
+      tenant_id: selectedTenantId.value,
+      representative_user_id: candidate?.representative_user_id,
+      role: addMemberRole.value,
+    })
+    if (res.success) {
+      MessagePlugin.success('Member added successfully')
+      addMemberPopupVisible.value = false
+      resetAddMemberDialog()
+      fetchMembers()
+    } else {
+      MessagePlugin.error(res.message || 'Failed to add member')
+    }
+  } catch (error: any) {
+    MessagePlugin.error(error?.message || 'Failed to add member')
+  } finally {
+    addMemberSubmitting.value = false
+  }
+}
+
+const resetAddMemberDialog = () => {
+  selectedTenantId.value = null
+  addMemberRole.value = 'viewer'
+  tenantSearchResults.value = []
+}
+
+const copyInviteCode = async () => {
+  await copyWithToast(inviteCode.value, 'Copied')
+}
+
+const copyInviteLink = async () => {
+  await copyWithToast(inviteLink.value, 'Copied')
+}
+
+const refreshInviteCode = async () => {
+  if (!props.orgId) return
+  refreshingCode.value = true
+  try {
+    const code = await orgStore.refreshInviteCode(props.orgId)
+    if (code) {
+      inviteCode.value = code
+      MessagePlugin.success('Invite code refreshed')
+      await fetchOrgDetail()
+    } else {
+      MessagePlugin.error(orgStore.error || 'Failed to refresh invite code')
+    }
+  } catch (error: any) {
+    MessagePlugin.error(error?.message || 'Failed to refresh invite code')
+  } finally {
+    refreshingCode.value = false
+  }
+}
+
+const handleValidityChange = async (value: number) => {
+  if (!props.orgId) return
+  try {
+    const result = await orgStore.updateOrganization(props.orgId, {
+      invite_code_validity_days: value
+    })
+    if (result) {
+      MessagePlugin.success('Saved successfully')
+    } else {
+      formData.value.invite_code_validity_days = orgInfo.value?.invite_code_validity_days ?? 7
+      MessagePlugin.error(orgStore.error || 'Save failed')
+    }
+  } catch (error: any) {
+    formData.value.invite_code_validity_days = orgInfo.value?.invite_code_validity_days ?? 7
+    MessagePlugin.error(error?.message || 'Save failed')
+  }
+}
+
+const handleApprovalToggle = async (value: boolean) => {
+  if (!props.orgId) return
+  try {
+    const result = await orgStore.updateOrganization(props.orgId, {
+      require_approval: value
+    })
+    if (result) {
+      MessagePlugin.success('Saved successfully')
+    } else {
+      formData.value.require_approval = !value
+      MessagePlugin.error(orgStore.error || 'Save failed')
+    }
+  } catch (error: any) {
+    formData.value.require_approval = !value
+    MessagePlugin.error(error?.message || 'Save failed')
+  }
+}
+
+const handleSearchableToggle = async (value: boolean) => {
+  if (!props.orgId) return
+  try {
+    const result = await orgStore.updateOrganization(props.orgId, {
+      searchable: value
+    })
+    if (result) {
+      MessagePlugin.success('Saved successfully')
+    } else {
+      formData.value.searchable = !value
+      MessagePlugin.error(orgStore.error || 'Save failed')
+    }
+  } catch (error: any) {
+    formData.value.searchable = !value
+    MessagePlugin.error(error?.message || 'Save failed')
+  }
+}
+
+const handleShareClick = (share: KnowledgeBaseShare) => {
+  handleClose()
+  router.push(`/platform/knowledge-bases/${share.knowledge_base_id}`)
+}
+
+const handleRemoveShare = async (share: KnowledgeBaseShare) => {
+  if (!props.orgId) return
+  try {
+    const res = await orgStore.unshareKnowledgeBase(
+      share.knowledge_base_id,
+      share.id,
+      props.orgId
+    )
+    if (res.success) {
+      MessagePlugin.success('Removed from shared space')
+      sharedKnowledgeBases.value = sharedKnowledgeBases.value.filter(s => s.id !== share.id)
+    } else {
+      MessagePlugin.error(res.message || 'Failed to remove, please try again')
+    }
+  } catch (error: any) {
+    MessagePlugin.error(error?.message || 'Failed to remove, please try again')
+  }
+}
+
+const handleRemoveAgentShare = async (share: AgentShareResponse) => {
+  if (!props.orgId) return
+  try {
+    const res = await orgStore.unshareAgent(share.agent_id, share.id, props.orgId)
+    if (res.success) {
+      MessagePlugin.success('Removed from shared space')
+      sharedAgents.value = sharedAgents.value.filter(s => s.id !== share.id)
+    } else {
+      MessagePlugin.error(res.message || 'Failed to remove, please try again')
+    }
+  } catch (error: any) {
+    MessagePlugin.error(error?.message || 'Failed to remove, please try again')
+  }
+}
+
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const getRoleTheme = (role: string) => {
+  switch (role) {
+    case 'admin': return 'primary'
+    case 'editor': return 'warning'
+    case 'viewer': return 'default'
+    default: return 'default'
+  }
+}
+
+const getPermissionTheme = (permission: string) => {
+  switch (permission) {
+    case 'admin': return 'primary'
+    case 'editor': return 'warning'
+    case 'viewer': return 'default'
+    default: return 'default'
+  }
+}
+
+const scrollContentToTop = async () => {
+  await nextTick()
+  contentWrapperRef.value?.scrollTo({ top: 0, behavior: 'auto' })
+}
+
+let previousBodyOverflow = ''
+let bodyScrollLocked = false
+
+const lockBackgroundScroll = () => {
+  if (bodyScrollLocked) return
+  previousBodyOverflow = document.body.style.overflow
+  document.body.style.overflow = 'hidden'
+  bodyScrollLocked = true
+}
+
+const unlockBackgroundScroll = () => {
+  if (!bodyScrollLocked) return
+  document.body.style.overflow = previousBodyOverflow
+  bodyScrollLocked = false
+}
+
+// Watch
+watch(() => props.visible, (newVal) => {
+  if (newVal) {
+    lockBackgroundScroll()
+    void scrollContentToTop()
+    currentSection.value = 'basic'
+    memberSearchQuery.value = ''
+    joinRequestSearchQuery.value = ''
+    approvePopupRequestId.value = null
+    joinRequests.value = []
+    if (props.mode === 'create') {
+      formData.value = { name: '', description: '', avatar: '', require_approval: false, searchable: false, invite_code_validity_days: 7, member_limit: 50 }
+      modalShell.markClean()
+      orgStore.clearCurrentOrganizationContext()
+      sharedKnowledgeBases.value = []
+      inviteCode.value = ''
+      inviteCodeExpiresAt.value = null
+    } else if (props.orgId) {
+      // Clear the previous organization context so stale details are not shown until fetchOrgDetail returns
+      if (orgStore.currentOrganization?.id !== props.orgId) {
+        orgStore.clearCurrentOrganizationContext()
+        sharedKnowledgeBases.value = []
+      }
+      fetchOrgDetail()
+      fetchMembers()
+      fetchSharedKBs()
+    }
+  } else {
+    unlockBackgroundScroll()
+  }
+}, { immediate: true })
+
+watch(() => props.orgId, () => {
+  if (props.visible) {
+    void scrollContentToTop()
+  }
+})
+
+watch(currentSection, (section) => {
+  void scrollContentToTop()
+  if (section === 'joinRequests' && props.orgId) {
+    fetchJoinRequests()
+  }
+})
+
+onBeforeUnmount(() => {
+  unlockBackgroundScroll()
+})
+
+watch(addMemberPopupVisible, (visible) => {
+  if (!visible) {
+    resetAddMemberDialog()
+  }
+})
+</script>
+
+<style scoped lang="less">
+@primary-color: var(--td-brand-color);
+@primary-light: var(--td-brand-color-light);
+@primary-lighter: var(--td-component-stroke);
+@primary-hover: var(--td-brand-color-active);
+
+.content-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 28px 40px 48px;
+  box-sizing: border-box;
+  scroll-padding-bottom: 24px;
+  overscroll-behavior: contain;
+}
+
+.tenant-role-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: var(--td-warning-color-light);
+  border: 1px solid var(--td-warning-color-focus);
+  border-radius: var(--app-radius-md);
+  font-size: var(--app-text-md);
+  line-height: 1.5;
+  color: var(--td-warning-color-active);
+
+  .t-icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+}
+
+.section {
+  width: 100%;
+  animation: sectionFadeIn 0.25s ease;
+
+  .section-header {
+    margin-bottom: 20px;
+    width: 100%;
+    min-width: 0;
+
+    h2 {
+      margin: 0;
+      font-family: var(--app-font-family);
+      font-size: var(--app-text-3xl);
+      font-weight: 600;
+      color: var(--td-text-color-primary);
+    }
+
+    .section-header-titlewrap h2 {
+      line-height: 1.25;
+    }
+
+    .section-description {
+      margin: 8px 0 0;
+      font-family: var(--app-font-family);
+      font-size: var(--app-text-base);
+      color: var(--td-text-color-secondary);
+      line-height: 1.5;
+    }
+
+    .permission-calc-hint {
+      margin-top: 6px;
+
+      .hint-inner {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: help;
+        color: var(--td-text-color-secondary);
+        font-size: var(--app-text-md);
+      }
+    }
+  }
+}
+
+@keyframes sectionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.setting-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--td-component-stroke);
+  min-width: 0;
+
+  &:first-child {
+    padding-top: 0;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .setting-info {
+    flex: 0 0 42%;
+    max-width: 42%;
+    min-width: 0;
+    padding-right: 0;
+
+    &.full-width {
+      max-width: 100%;
+      padding-right: 0;
+    }
+
+    label {
+      display: block;
+      font-size: var(--app-text-lg);
+      font-weight: 500;
+      color: var(--td-text-color-primary);
+      margin-bottom: 4px;
+
+      .required {
+        color: var(--td-error-color);
+        margin-left: 2px;
+      }
+    }
+
+    .desc {
+      font-size: var(--app-text-md);
+      color: var(--td-text-color-secondary);
+      margin: 0;
+      line-height: 1.5;
+    }
+  }
+
+  .setting-control {
+    flex: 1 1 58%;
+    min-width: 0;
+    max-width: 58%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    overflow: hidden;
+
+    &.full-width {
+      max-width: 100%;
+      justify-content: flex-start;
+    }
+
+    :deep(.t-select),
+    :deep(.t-input),
+    :deep(.t-textarea) {
+      width: 100%;
+      min-width: 0;
+    }
+  }
+
+  &.setting-row-vertical {
+    flex-direction: column;
+    gap: 12px;
+
+    .setting-info {
+      max-width: 100%;
+      padding-right: 0;
+    }
+
+    .setting-control {
+      max-width: 100%;
+      justify-content: flex-start;
+    }
+  }
+}
+
+.avatar-trigger-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 4px;
+  border-radius: var(--app-radius-xl);
+  transition: background var(--app-motion-base) ease;
+}
+
+.avatar-trigger-wrap:hover {
+  background: var(--td-bg-color-container-hover);
+}
+
+.avatar-change-hint {
+  font-size: var(--app-text-xs);
+  color: var(--td-text-color-placeholder);
+  line-height: 1.2;
+}
+
+.name-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+
+  .name-input {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.content-wrapper.is-create {
+  padding: 28px 28px 24px;
+
+  .section-header {
+    padding-right: 20px;
+    box-sizing: border-box;
+    margin-bottom: 24px;
+    h2 { font-size: var(--app-text-xl); line-height: 28px; }
+    .section-description { margin-top: 6px; font-size: var(--app-text-sm); }
+  }
+
+  .settings-group { gap: 20px; }
+  .setting-row {
+    flex-direction: column;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    .setting-info, .setting-control { flex: auto; width: 100%; max-width: 100%; }
+    .setting-info label { font-size: var(--app-text-base); }
+    .setting-info .desc { font-size: var(--app-text-sm); }
+    .setting-control { overflow: visible; }
+  }
+}
+
+.permission-comparison {
+  overflow: hidden;
+  border: 1px solid var(--td-component-stroke);
+  border-radius: var(--app-radius-md);
+}
+.permission-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: var(--app-text-sm);
+  line-height: 20px;
+  color: var(--td-text-color-secondary);
+
+  th, td { padding: 12px 8px; text-align: center; overflow-wrap: anywhere; }
+  th:first-child { width: 46%; padding-left: 14px; text-align: left; }
+  thead { background: var(--td-bg-color-secondarycontainer); }
+  thead th { font-weight: 500; color: var(--td-text-color-primary); }
+  tbody th { font-weight: 400; }
+  tbody tr { border-top: 1px solid var(--td-component-stroke); }
+  .permission-allowed { display: inline-flex; vertical-align: middle; color: var(--td-brand-color); }
+  .permission-unavailable { color: var(--td-text-color-placeholder); }
+}
+
+.info-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 16px;
+  color: var(--td-text-color-secondary);
+  font-size: var(--app-text-sm);
+  line-height: 20px;
+  .t-icon { flex-shrink: 0; margin-top: 2px; }
+}
+
+.avatar-popover-content {
+  padding: 12px;
+  min-width: 260px;
+}
+
+.avatar-popover-title {
+  margin: 0 0 10px 0;
+  font-size: var(--app-text-sm);
+  color: var(--td-text-color-secondary);
+  line-height: 1.4;
+}
+
+.avatar-popover-content .avatar-emoji-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 280px;
+}
+
+.avatar-popover-content .avatar-emoji-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--td-component-stroke);
+  border-radius: var(--app-radius-md);
+  background: var(--td-bg-color-container);
+  font-size: var(--app-text-2xl);
+  cursor: pointer;
+  transition: border-color var(--app-motion-base) ease, background var(--app-motion-base) ease;
+}
+
+.avatar-popover-content .avatar-emoji-btn:hover {
+  border-color: var(--td-brand-color);
+  background: color-mix(in srgb, var(--td-brand-color) 6%, transparent);
+}
+
+.avatar-popover-content .avatar-emoji-btn.is-selected {
+  border-color: var(--td-brand-color);
+  background: color-mix(in srgb, var(--td-brand-color) 12%, transparent);
+}
+
+.avatar-popover-content .avatar-clear-btn {
+  margin-top: 10px;
+  color: var(--td-text-color-secondary);
+  font-size: var(--app-text-sm);
+}
+
+.avatar-popover-content .avatar-clear-btn:hover {
+  color: var(--td-brand-color-active);
+}
+
+.invite-card {
+  background: var(--td-bg-color-secondarycontainer);
+  border: 1px solid var(--td-component-stroke);
+  border-radius: var(--app-radius-lg);
+  padding: 16px;
+
+  .invite-method {
+    .invite-method-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+
+      .invite-icon {
+        font-size: var(--app-text-xl);
+        color: @primary-color;
+      }
+
+      .invite-method-title {
+        font-size: var(--app-text-md);
+        font-weight: 600;
+        color: var(--td-text-color-primary);
+      }
+    }
+  }
+
+  .invite-code-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--td-bg-color-container);
+    border: 1px solid var(--td-component-stroke);
+    border-radius: var(--app-radius-md);
+    padding: 10px 14px;
+
+    .invite-code-value {
+      font-family: var(--app-font-family-mono);
+      font-size: var(--app-text-xl);
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: @primary-color;
+    }
+
+    .invite-code-actions {
+      display: flex;
+      gap: 4px;
+    }
+  }
+
+  .invite-remaining {
+    margin: 8px 0 0;
+    font-size: var(--app-text-sm);
+    color: var(--td-text-color-secondary);
+  }
+
+  .invite-validity-desc {
+    font-size: var(--app-text-sm);
+    color: var(--td-text-color-secondary);
+    margin: 4px 0 10px;
+    line-height: 1.4;
+  }
+
+  .invite-validity-select {
+    min-width: 140px;
+  }
+
+  .member-limit-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+
+    .member-limit-hint {
+      font-size: var(--app-text-sm);
+      color: var(--td-text-color-secondary);
+    }
+  }
+
+  .invite-divider {
+    height: 1px;
+    background: var(--td-bg-color-secondarycontainer);
+    margin: 12px 0;
+  }
+
+  .invite-link-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--td-bg-color-container);
+    border: 1px solid var(--td-component-stroke);
+    border-radius: var(--app-radius-md);
+    padding: 10px 14px;
+    gap: 12px;
+
+    .invite-link-value {
+      flex: 1;
+      font-size: var(--app-text-sm);
+      color: var(--td-text-color-secondary);
+      word-break: break-all;
+      line-height: 1.4;
+    }
+  }
+
+  .approval-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .approval-desc {
+      font-size: var(--app-text-md);
+      color: var(--td-text-color-placeholder);
+    }
+  }
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+  min-width: 0;
+}
+
+.section-header-titlewrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 auto;
+
+  h2 {
+    margin: 0;
+    line-height: 1.25;
+    white-space: nowrap;
+  }
+}
+
+.permissions-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--app-radius-sm);
+  background: transparent;
+  color: var(--td-text-color-secondary);
+  cursor: pointer;
+  line-height: 0;
+  transition: background-color var(--app-motion-base) ease, color var(--app-motion-base) ease;
+
+  :deep(.t-icon) {
+    display: block;
+  }
+
+  &:hover {
+    background-color: var(--td-bg-color-secondarycontainer);
+    color: var(--td-brand-color);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--td-brand-color-focus);
+    outline-offset: 1px;
+  }
+}
+
+.members-list-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.members-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
+  flex-wrap: wrap;
+}
+
+.members-list-titlewrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.members-list-title {
+  font-size: var(--app-text-base);
+  font-weight: 600;
+  color: var(--td-text-color-primary);
+}
+
+.members-list-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: var(--app-radius-lg);
+  background-color: var(--td-bg-color-secondarycontainer);
+  color: var(--td-text-color-primary);
+  font-size: var(--app-text-sm);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.members-list-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.members-list-search {
+  flex: 0 0 14rem;
+  width: 14rem;
+  min-width: 0;
+
+  :deep(.t-input) {
+    width: 100%;
+  }
+}
+
+.members-list-add-btn {
+  flex-shrink: 0;
+}
+
+.members-list-upgrade-btn {
+  flex-shrink: 0;
+}
+
+.loading-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 0 8px;
+}
+
+.empty-state {
+  padding: 8px 0 16px;
+}
+
+.empty-state-title {
+  margin: 0 0 4px;
+  font-size: var(--app-text-base);
+  font-weight: 500;
+  color: var(--td-text-color-primary);
+}
+
+.empty-state-desc {
+  margin: 0;
+  font-size: var(--app-text-md);
+  color: var(--td-text-color-secondary);
+}
+
+.permission-hint-popover {
+  padding: 14px 16px;
+  max-width: 360px;
+
+  .permission-hint-title {
+    margin: 0 0 6px;
+    font-size: var(--app-text-base);
+    font-weight: 600;
+    color: var(--td-text-color-primary);
+  }
+
+  .permission-hint-desc {
+    margin: 0;
+    font-size: var(--app-text-md);
+    line-height: 1.5;
+    color: var(--td-text-color-secondary);
+  }
+}
+
+.shared-resources-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resource-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.resource-name {
+  display: block;
+  font-weight: 500;
+  font-size: var(--app-text-base);
+  color: var(--td-text-color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resource-meta {
+  font-size: var(--app-text-md);
+  color: var(--td-text-color-secondary);
+}
+
+.member-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 2px 0;
+
+  .member-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    font-size: var(--app-text-base);
+    color: var(--td-text-color-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  .member-email {
+    font-size: var(--app-text-sm);
+    line-height: 1.35;
+    color: var(--td-text-color-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .me-tag,
+  .owner-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 5px;
+    height: 16px;
+    border-radius: 3px;
+    font-size: var(--app-text-2xs);
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .me-tag {
+    background: @primary-color;
+    color: var(--td-text-color-anti);
+  }
+
+  .owner-tag {
+    background: var(--td-brand-color-light);
+    color: @primary-color;
+  }
+}
+
+.data-table-shell {
+  overflow-x: auto;
+  border-radius: var(--app-radius-lg);
+  border: 1px solid var(--td-component-stroke);
+  background-color: var(--td-bg-color-container);
+
+  :deep(thead th) {
+    font-weight: 600;
+    font-size: var(--app-text-md);
+  }
+
+  :deep(.t-table td),
+  :deep(.t-table th) {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  :deep(.role-cell) {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  :deep(.member-role-select.t-select) {
+    width: 100%;
+  }
+}
+
+.members-table-shell {
+  overflow: visible;
+  max-height: none;
+
+  :deep(.t-table__content) {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+}
+
+.permissions-compact {
+  padding: 8px;
+
+  .permissions-compact-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 16px;
+
+    .permissions-compact-title {
+      font-size: var(--app-text-base);
+      font-weight: 600;
+      color: var(--td-text-color-primary);
+    }
+
+    .permissions-compact-desc {
+      font-size: var(--app-text-md);
+      color: var(--td-text-color-secondary);
+    }
+  }
+
+  .permissions-compact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+  }
+
+  .perm-role-block {
+    border: 1px solid var(--td-component-stroke);
+    border-radius: var(--app-radius-md);
+    padding: 14px 16px;
+    background: var(--td-bg-color-container);
+    transition: all var(--app-motion-base) ease;
+
+    &.is-me {
+      border-color: var(--td-brand-color);
+      background: var(--td-brand-color-light);
+    }
+
+    .perm-role-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--app-text-base);
+      font-weight: 600;
+      color: var(--td-text-color-primary);
+      margin-bottom: 12px;
+
+      .me-badge {
+        margin-left: auto;
+        font-size: var(--app-text-sm);
+        font-weight: 500;
+        color: var(--td-brand-color);
+        padding: 2px 8px;
+        background: var(--td-brand-color-light);
+        border-radius: var(--app-radius-xs);
+      }
+    }
+
+    .perm-items {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      .perm-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        font-size: var(--app-text-md);
+        line-height: 1.5;
+
+        .t-icon {
+          margin-top: 2px;
+          flex-shrink: 0;
+        }
+
+        &.has {
+          color: var(--td-text-color-secondary);
+
+          .t-icon {
+            color: var(--td-brand-color);
+          }
+        }
+
+        &.no {
+          color: var(--td-text-color-disabled);
+
+          .t-icon {
+            color: var(--td-text-color-disabled);
+          }
+        }
+      }
+    }
+  }
+
+  &.permissions-compact--popover {
+    padding: 10px 12px;
+    margin: 0;
+    max-height: min(392px, calc(65vh - 8px));
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    .permissions-compact-header {
+      gap: 2px;
+      margin-bottom: 10px;
+
+      .permissions-compact-title {
+        font-size: var(--app-text-md);
+      }
+
+      .permissions-compact-desc {
+        font-size: var(--app-text-xs);
+        line-height: 1.4;
+      }
+    }
+
+    .permissions-compact-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .perm-role-block {
+      padding: 8px 10px;
+      border-radius: var(--app-radius-sm);
+
+      .perm-role-tag {
+        font-size: var(--app-text-sm);
+        margin-bottom: 6px;
+        gap: 4px;
+
+        .me-badge {
+          font-size: var(--app-text-2xs);
+          padding: 1px 5px;
+        }
+      }
+
+      .perm-items {
+        gap: 3px;
+
+        .perm-item {
+          font-size: var(--app-text-xs);
+          line-height: 1.35;
+          gap: 4px;
+
+          .t-icon {
+            margin-top: 1px;
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    &.permissions-compact--popover .permissions-compact-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+@media (max-width: 560px) {
+  .members-list-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .members-list-search {
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+  }
+}
+
+// Join requests table
+.join-requests-wrap {
+  .join-request-message {
+    display: block;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--app-text-md);
+    color: var(--td-text-color-secondary);
+  }
+
+  .join-request-role-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--app-text-md);
+    color: var(--td-text-color-secondary);
+
+    .t-icon {
+      flex-shrink: 0;
+      color: var(--td-text-color-placeholder);
+    }
+  }
+
+  .join-request-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+}
+
+.content-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content-wrapper::-webkit-scrollbar-track {
+  background: var(--td-bg-color-container);
+}
+
+.content-wrapper::-webkit-scrollbar-thumb {
+  background: var(--td-gray-color-5);
+  border-radius: 3px;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--td-gray-color-6);
+}
+
+// Transitions
+
+.add-member-tip {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: var(--app-radius-md);
+  background: var(--td-bg-color-secondarycontainer);
+  border: 1px solid var(--td-component-stroke);
+  font-size: var(--app-text-md);
+  color: var(--td-text-color-secondary);
+  line-height: 1.5;
+}
+
+.member-invite-popup-inner {
+  width: min(400px, calc(100vw - 32px));
+  max-width: 100%;
+}
+
+.member-invite-popup-title {
+  font-size: var(--app-text-lg);
+  font-weight: 600;
+  color: var(--td-text-color-primary);
+  margin: 0 0 12px;
+  line-height: 1.35;
+}
+
+.member-invite-form {
+  :deep(.t-form__item) {
+    margin-bottom: 14px;
+
+    &:last-child {
+      margin-bottom: 4px;
+    }
+  }
+
+  :deep(.t-form__label) {
+    font-weight: 500;
+    padding-bottom: 6px;
+  }
+
+  :deep(.t-select) {
+    width: 100%;
+  }
+
+  :deep(.t-textarea) {
+    width: 100%;
+  }
+
+  .member-form-control {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .field-hint {
+    margin: 6px 0 0;
+    font-size: var(--app-text-sm);
+    color: var(--td-text-color-placeholder);
+    line-height: 1.45;
+  }
+}
+
+.invite-popup-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--td-component-stroke);
+}
+</style>
+
+<style lang="less">
+.settings-modal-shell.organization-create-overlay {
+  .settings-modal { max-width: 860px; height: 560px; }
+  .settings-sidebar { width: 176px; }
+  .sidebar-title { font-size: var(--app-text-base); line-height: 24px; }
+  .settings-footer { padding: 14px 28px; }
+  .settings-footer-actions { gap: 8px; }
+
+  @media (max-width: 640px) {
+    padding: 12px;
+    .settings-modal { height: 680px; max-height: calc(100dvh - 24px); }
+    .settings-container { flex-direction: column; }
+    .settings-sidebar { width: 100%; border-right: 0; border-bottom: 1px solid var(--td-component-stroke); }
+    .sidebar-header { padding-right: 52px; border-bottom: 0; }
+    .settings-nav { display: flex; flex: none; gap: 4px; padding: 0 12px 10px; }
+    .nav-group-title { display: none; }
+    .nav-item { margin: 0; }
+    .content-wrapper.is-create { padding: 20px 16px; }
+    .settings-footer { padding: 12px 16px; }
+    .permission-table th:first-child { width: 40%; padding-left: 10px; }
+    .permission-table th, .permission-table td { padding: 10px 5px; }
+  }
+}
+
+.org-permissions-popup-overlay {
+  z-index: 3050 !important;
+
+  .permission-hint-popover {
+    padding: 14px 16px;
+
+    .permission-hint-title {
+      margin: 0 0 6px;
+      font-size: var(--app-text-base);
+      font-weight: 600;
+      color: var(--td-text-color-primary);
+      line-height: 1.35;
+    }
+
+    .permission-hint-desc {
+      margin: 0;
+      font-size: var(--app-text-md);
+      line-height: 1.55;
+      color: var(--td-text-color-secondary);
+    }
+  }
+
+  .permissions-compact.permissions-compact--popover {
+    padding: 12px 14px;
+    margin: 0;
+    max-height: min(392px, calc(65vh - 8px));
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    .permissions-compact-header {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 10px;
+
+      .permissions-compact-title {
+        font-size: var(--app-text-md);
+        font-weight: 600;
+        color: var(--td-text-color-primary);
+      }
+
+      .permissions-compact-desc {
+        font-size: var(--app-text-sm);
+        line-height: 1.45;
+        color: var(--td-text-color-secondary);
+      }
+    }
+
+    .permissions-compact-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .perm-role-block {
+      border: 1px solid var(--td-component-stroke);
+      border-radius: var(--app-radius-sm);
+      padding: 8px 10px;
+      background: var(--td-bg-color-container);
+
+      &.is-me {
+        border-color: var(--td-brand-color);
+        background: var(--td-brand-color-light);
+      }
+
+      .perm-role-tag {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: var(--app-text-sm);
+        font-weight: 600;
+        color: var(--td-text-color-primary);
+        margin-bottom: 6px;
+
+        .me-badge {
+          margin-left: auto;
+          font-size: var(--app-text-2xs);
+          font-weight: 500;
+          color: var(--td-brand-color);
+          padding: 1px 5px;
+          background: var(--td-brand-color-light);
+          border-radius: var(--app-radius-xs);
+        }
+      }
+
+      .perm-items {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+
+        .perm-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 4px;
+          font-size: var(--app-text-xs);
+          line-height: 1.35;
+          color: var(--td-text-color-secondary);
+
+          .t-icon {
+            margin-top: 1px;
+            flex-shrink: 0;
+          }
+
+          &.has .t-icon {
+            color: var(--td-brand-color);
+          }
+
+          &.no {
+            color: var(--td-text-color-disabled);
+
+            .t-icon {
+              color: var(--td-text-color-disabled);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+:root[theme-mode='dark'] .org-permissions-popup-overlay .t-popup__content {
+  background: rgba(36, 36, 36, 0.92) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.05),
+    0 2px 4px rgba(0, 0, 0, 0.12),
+    0 8px 32px rgba(0, 0, 0, 0.28) !important;
+}
+
+@media (max-width: 480px) {
+  .org-permissions-popup-overlay .permissions-compact.permissions-compact--popover .permissions-compact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.org-add-member-popup-overlay,
+.org-upgrade-popup-overlay,
+.org-approve-request-popup-overlay {
+  z-index: 3050 !important;
+
+  .t-popup__content {
+    padding: 16px;
+    border-radius: var(--app-radius-lg);
+    border: 1px solid var(--td-component-stroke);
+    box-shadow: var(--td-shadow-2), 0 8px 24px rgba(15, 23, 42, 0.08);
+  }
+}
+
+.org-upgrade-popup-overlay,
+.org-approve-request-popup-overlay {
+  .org-upgrade-popup-inner,
+  .org-approve-request-popup-inner {
+    width: min(360px, calc(100vw - 32px));
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .member-invite-popup-title {
+    margin: 0 0 10px;
+    font-size: var(--app-text-lg);
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--td-text-color-primary);
+  }
+
+  .add-member-tip {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: var(--app-radius-md);
+    background: var(--td-bg-color-secondarycontainer);
+    border: 1px solid var(--td-component-stroke);
+    font-size: var(--app-text-md);
+    color: var(--td-text-color-secondary);
+    line-height: 1.5;
+  }
+
+  .upgrade-current-role-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border-radius: var(--app-radius-md);
+    background: var(--td-bg-color-secondarycontainer);
+    border: 1px solid var(--td-component-stroke);
+  }
+
+  .upgrade-current-role-label {
+    font-size: var(--app-text-md);
+    color: var(--td-text-color-secondary);
+  }
+
+  .org-upgrade-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .org-upgrade-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .org-upgrade-field-label {
+    display: block;
+    margin: 0;
+    font-size: var(--app-text-base);
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--td-text-color-primary);
+  }
+
+  .upgrade-role-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .upgrade-role-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border: none;
+    border-radius: var(--app-radius-sm);
+    background: var(--td-bg-color-secondarycontainer);
+    font: inherit;
+    font-size: var(--app-text-md);
+    line-height: 1.4;
+    color: var(--td-text-color-secondary);
+    cursor: pointer;
+    transition: color var(--app-motion-fast) ease, background var(--app-motion-fast) ease;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--td-brand-color);
+      background: color-mix(in srgb, var(--td-brand-color) 8%, var(--td-bg-color-secondarycontainer));
+      outline: none;
+    }
+
+    &.active {
+      background: color-mix(in srgb, var(--td-brand-color) 12%, transparent);
+      color: var(--td-brand-color);
+      font-weight: 500;
+    }
+  }
+
+  .org-upgrade-field .t-textarea,
+  .org-upgrade-field .t-select {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .invite-popup-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--td-component-stroke);
+  }
+}
+</style>

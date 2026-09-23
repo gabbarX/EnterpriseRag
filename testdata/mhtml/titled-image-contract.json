@@ -1,0 +1,11 @@
+{
+  "markdown_content": "| Leave Type | Entitlement |\n| --- | --- |\n| Earned Leave | 18 days |\n\n![चित्र](images/पृष्ठ 1 (परीक्षण).gif \"चरण 1) चित्र\")\n\nCarry forward is capped at 30 days.\n\nalpha  \nbeta\n\n* parent\n  + child\n\n> quoted\n\n```\nline1\n\n\nline2\n```",
+  "images": [
+    {
+      "filename": "पृष्ठ 1 (परीक्षण).gif",
+      "original_ref": "images/पृष्ठ 1 (परीक्षण).gif",
+      "mime_type": "image/gif",
+      "image_data_base64": "R0lGODdhQABAAIEAAFCM3AAAAAAAAAAAACwAAAAAQABAAEAIaQABCBxIsKDBgwgTKlzIsKHDhxAjSpxIsaLFixgzatzIsaPHjyBDihxJsqTJkyhTqlzJsqXLlzBjypxJs6bNmzhz6tzJs6fPn0CDCh1KtKjRo0iTKl3KtKnTp1CjSp1KtarVq1izagUQEAA7"
+    }
+  ]
+}
